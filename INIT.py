@@ -1,8 +1,15 @@
 # ===== Get 3PP products: =====
 import subprocess
 import os
+import tensorflow as tf
 if(not os.path.isdir("munkres-tensorflow")):
     subprocess.call(["git", "clone","https://github.com/mbaradad/munkres-tensorflow.git"])
+    os.chdir("./munkres-tensorflow")
+    TF_INC=tf.sysconfig.get_include()
+    os.system("g++ -std=c++11 -shared hungarian.cc -o hungarian.so -fPIC -I "+TF_INC)
+    os.chdir("..")
+
+exit(1)
 
 sample_size=1000
 # ===== Generate mnist train/test datasets =====
