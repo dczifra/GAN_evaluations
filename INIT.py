@@ -6,7 +6,6 @@ if(not os.path.isdir("munkres-tensorflow")):
     subprocess.call(["git", "clone","https://github.com/mbaradad/munkres-tensorflow.git"])
     os.chdir("./munkres-tensorflow")
     TF_INC=tf.sysconfig.get_include()
-    #g++ -std=c++11 -shared hungarian.cc -o hungarian.so -fPIC -I$TF_INC -L$TF_LIB -ltensorflow_framework -D_GLIBCXX_USE_CXX11_ABI=0
     os.system("g++ -std=c++11 -shared hungarian.cc -o hungarian.so -fPIC -I "+TF_INC)
     os.chdir("..")
 
