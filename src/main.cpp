@@ -164,9 +164,7 @@ double match_mnist(int N,
         for (int j = 0; j < N; j++)
         {
             //cout << i << " " << j << endl;
-            if (i == j)
-                myfile << "99999999"
-                       << " ";
+            if (i == j) myfile << "99999999"<< " ";
             else
             {
                 int pict_dist = 1;
@@ -259,6 +257,15 @@ Menu *help(vector<string> argv)
     }
     return m;
 }
+double deficit(int i){
+    Hungarian_method method = Hungarian_method();
+    method.read_mtx("/tmp/mnist_mtx.txt");
+    method.init();
+
+    method.sparse_all(i);
+    auto p=method.Gamma();
+    return ((double) p.first/p.second)*100.0;
+}
 
 // ====================================================================
 //                                  MAIN
@@ -274,14 +281,24 @@ int main(int argc, char *argv[])
         return 1;
     else if (m->range > 0)
     {
+        match_mnist(5, m->size, m->folder1, m->folder2)/(m->range*5);
+
         ofstream myfile(m->out);
+        ofstream myfile2(m->out+"deficit");
         myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
-        for (int i = 1; m->range * i <= m->N; i++)
+        int range2=1;
+        myfile2<<range2<<" "<<m->N<<" "<<range2<<endl;
+        for (int i = 1; 1 * i <= m->N; i++)
         {
+            cout<<i<<endl;
             myfile << (match_mnist(m->range * i, m->size, m->folder1, m->folder2)/(m->range*i));
             myfile << " ";
+
+            myfile2 << deficit(i);
+            myfile2 << " ";
         }
-        myfile.close();
+        //myfile.close();
+        myfile2.close();
     }
     else
     {

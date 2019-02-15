@@ -26,6 +26,8 @@
 #include <limits>
 #include <assert.h>
 #include <cmath>
+#include <algorithm>
+#include <limits.h>
 
 using namespace std;
 
@@ -66,6 +68,50 @@ public:
         alternating_path();
         double ret=print_matching(file_out);
         return ret;
+    }
+
+    template<typename T>
+    class Compare{
+        bool operator()(T& elem1, T& elem2){
+            return elem1<elem2;
+        }
+    };
+    /*
+     * Description:
+     *     --> Sort the neighbours by weight, keep the N most relevant
+     */
+    void sparse_neighbours(int node_ID,int N_){
+        vector<long double> temp;
+        for(int i=0;i<mtx[node_ID].size();i++){
+            temp.push_back(mtx[node_ID][i]);
+        }
+        nth_element(temp.begin(),temp.begin()+N_,temp.end());
+        for(int i=0;i<mtx[node_ID].size();i++){
+            if(mtx[node_ID][i]>temp[N_-1]){
+                mtx[node_ID][i]=LONG_MAX;
+            }
+        }
+    }
+    void sparse_all(int N){
+        for(int i=0;i<mtx.size();i++){
+            sparse_neighbours(i,N);
+        }
+    }
+    // Returns the (Deficit,M) pair, where the deficit is the 
+    pair<int,int> Gamma(){
+        int covered_num=0;
+        for(int i=0;i<M;i++){
+            bool covered=false;
+            for(int j=0;j<N;j++){
+                if(mtx[j][i]<9999.9){
+                    covered=true;
+                    break;
+                }
+            }
+            if(not covered) covered_num++;
+        }
+        return {M-covered_num,M};
+
     }
 
     long double modify_y(long double delta,vector<bool> (&reachable)[2]){
