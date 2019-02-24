@@ -3,3 +3,7 @@ bin
 cikkek
 result
 munkres-tensorflow
+tf_matrix_multiplication
+*.gz
+*.vscode*
+*_checkpoint*

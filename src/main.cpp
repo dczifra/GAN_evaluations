@@ -121,20 +121,29 @@ double euclidian_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
     return sqrt(sum);
 }
 
-double match_mnist(int N,
+/**
+ * Description:
+ *     Creates the Incidence graph to a temp file
+ * Parameters:
+ *     N:                        size of the train/test dataset
+ *     size:                     size of the images
+ *     train_folder/test_folder: the folder, where the datasets are
+ */  
+void generate_graph(int N,
                    pair<int, int> &size,
-                   string train_folder,
-                   string test_folder)
-{
+                   string& train_folder,
+                   string& test_folder){
+
     // TODO: for small dataset save into memory instead of hard disc
+    // ===== Create temporary output file =====
     std::string filename = "/tmp/mnist_mtx.txt";
     ofstream myfile(filename.c_str());
     myfile << N << " " << N << endl;
 
-    // TODO
-    int n = 28;
-    int m = 28;
+    int n = size.first;
+    int m = size.second;
 
+    // ===== Read test, and train datasets from file =====
     vector<vector<double>> p1, p2;
     int iterator = 0;
     string path;
@@ -153,18 +162,19 @@ double match_mnist(int N,
         if (++iterator > N)
             break;
     }
-    srand(0);
-    std::random_shuffle ( train0.begin(), train0.end() );
-    srand(1);
-    std::random_shuffle ( test0.begin(), test0.end() );
 
+    // We suppose, that the data is shuffled (during the generation)
+    //     If not: 
+    srand(0); std::random_shuffle ( train0.begin(), train0.end() );
+    srand(1); std::random_shuffle ( test0.begin(), test0.end() );
+    // ===== Generate the Incidence matrix =====
     for (int i = 0; i < N; i++)
     {
         myfile << i << " ";
         for (int j = 0; j < N; j++)
         {
-            //cout << i << " " << j << endl;
-            if (i == j) myfile << "99999999"<< " ";
+            // TODO: just if we match the dataset with itself
+            if (i == j && 0) myfile << "99999999"<< " ";
             else
             {
                 int pict_dist = 1;
@@ -180,6 +190,22 @@ double match_mnist(int N,
         myfile << endl;
     }
     myfile.close();
+}
+
+/**
+ * Description:
+ *     Returns the perfect matching between the two picture dataset
+ * Parameters:
+ *     N:                        size of the train/test dataset
+ *     size:                     size of the images
+ *     train_folder/test_folder: the folder, where the datasets are
+ */  
+double match_mnist(int N,
+                   pair<int, int> &size,
+                   string& train_folder,
+                   string& test_folder)
+{
+    generate_graph(N,size,train_folder,test_folder);
 
     Hungarian_method method = Hungarian_method();
     //std::cout << "The matching between the pictures:\n";
@@ -196,6 +222,7 @@ struct Menu
     int N = 10;
     int range = -1;
     string out = "NO_OUTFILE_IS_GIVEN";
+    bool deficit=false;
 };
 
 Menu *help(vector<string> argv)
@@ -254,9 +281,14 @@ Menu *help(vector<string> argv)
         {
             m->out = argv[++i];
         }
+        else if ((string)argv[i] == "-deficit")
+        {
+            m->deficit = true;
+        }
     }
     return m;
 }
+
 double deficit(int i){
     Hungarian_method method = Hungarian_method();
     method.read_mtx("/tmp/mnist_mtx.txt");
@@ -281,24 +313,33 @@ int main(int argc, char *argv[])
         return 1;
     else if (m->range > 0)
     {
-        match_mnist(5, m->size, m->folder1, m->folder2)/(m->range*5);
+        //match_mnist(5, m->size, m->folder1, m->folder2)/(m->range*5);
 
-        ofstream myfile(m->out);
-        ofstream myfile2(m->out+"deficit");
-        myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
-        int range2=1;
-        myfile2<<range2<<" "<<m->N<<" "<<range2<<endl;
-        for (int i = 1; 1 * i <= m->N; i++)
-        {
-            cout<<i<<endl;
-            myfile << (match_mnist(m->range * i, m->size, m->folder1, m->folder2)/(m->range*i));
-            myfile << " ";
-
-            myfile2 << deficit(i);
-            myfile2 << " ";
+        ofstream myfile;
+        if(m->deficit){
+            generate_graph(m->N,m->size, m->folder1, m->folder2);
+            myfile.open(m->out+"deficit");
+            int range2=1;
+            myfile<<1<<" "<<(m->N/m->range)<<" "<<1<<endl;
         }
-        //myfile.close();
-        myfile2.close();
+        else{
+            myfile.open(m->out);
+            myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
+        }
+        for (int i = 1; m->range * i <= m->N; i++)
+        {
+            if(m->deficit){
+                cout<<i<<endl;
+                myfile << deficit(i );
+                myfile << " ";
+            }
+            else{
+                //cout<<i<<endl;
+                myfile << (match_mnist(m->range * i, m->size, m->folder1, m->folder2)/(m->range*i));
+                myfile << " ";
+            }
+        }
+        myfile.close();
     }
     else
     {

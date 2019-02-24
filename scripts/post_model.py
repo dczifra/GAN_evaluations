@@ -51,7 +51,7 @@ def generate_mnist(N,test=False,):
     # ===== Choose dataset, and create folder(s) =====
     filename="data/mnist/"+("test" if test else "train")
     data=(x_test if test else x_train)
-    np.random.shuffle(data)
+    data=np.random.shuffle(data)
     if(not os.path.isdir(filename)):
         os.makedirs(filename)
         

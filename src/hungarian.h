@@ -99,18 +99,18 @@ public:
     }
     // Returns the (Deficit,M) pair, where the deficit is the 
     pair<int,int> Gamma(){
-        int covered_num=0;
+        int not_covered_num=0;
         for(int i=0;i<M;i++){
             bool covered=false;
             for(int j=0;j<N;j++){
-                if(mtx[j][i]<9999.9){
+                if(mtx[j][i]<99999.9){
                     covered=true;
                     break;
                 }
             }
-            if(not covered) covered_num++;
+            if(not covered) not_covered_num++;
         }
-        return {M-covered_num,M};
+        return {not_covered_num,M};
 
     }
 
