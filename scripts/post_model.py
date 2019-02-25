@@ -62,15 +62,32 @@ def generate_mnist(N,test=False,):
                 myfile.write(str(elem)+" ")
             myfile.write("\n")
 
-
-
-if(__name__=="__main__"):
+def tutorial():
     generate_mnist(10,False)
-    exit(1)
-    #disc_model=get_model("data/mnist_wgan/discriminator_1000")
-    #model.summary()
     gen_model=get_model("data/mnist_wgan/generator_1000")
     generate_samples(gen_model,"data/mnist/wgan")
 
-    gen_model=get_model("data/mnist_wgan-gp/generator_1000")
-    generate_samples(gen_model,"data/mnist/wgan-gp")
+def process_modell(model_filename,sample_size=2000,generate=False):
+    if(generate):
+        gen_model=get_model(model_filename)
+        generate_samples(gen_model,model_filename+"/data",sample_size)
+
+    args=["bin/main",
+        "-size","28,28",
+        "-folder1","data/mnist/train",\
+        "-folder2",model_filename+"/data","-N 2000","-range 100",\
+        "-out"]
+
+    os.system(" ".join(args+[model_filename+"/compare.txt"]))
+    os.system(" ".join(args+[model_filename+"/flow.txt","-flow"]))
+    os.system(" ".join(args+[model_filename+"/deficit.txt","-deficit"]))
+    #os.system(" ")
+
+
+
+if(__name__=="__main__"):
+    process_modell("data/mnist/test")
+    process_modell("models/wgan/generator_1000")
+    process_modell("models/wgan-gp/generator_1000")
+    
+

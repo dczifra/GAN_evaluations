@@ -43,6 +43,15 @@ def wgan_wgan_gp(N):
             title=title,
             labels=labels)
 
+def wgan_wgan_gp_type(N,type):
+    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
+    labels=["test","wgan","wgan-gp"]
+    different_model_compare( files=["data/mnist/test/{}.txt".format(type),
+            "models/wgan-gp/generator_{}/{}.txt".format(N,type),
+            "models/wgan/generator_{}/{}.txt".format(N,type)],
+            title=title,
+            labels=labels)
+
 def FID_for_MNIST():
     title="FID for MINST"
     labels=["test","wgan","wgan-gp"]
@@ -69,4 +78,9 @@ def deficit():
 #wgan_wgan_gp(10000)
 #deficit()
 #wgan()
-FID_for_MNIST()
+if(__name__=="__main__"):
+    #FID_for_MNIST()
+    N=1000
+    wgan_wgan_gp_type(N,"compare")
+    wgan_wgan_gp_type(N,"flow")
+    wgan_wgan_gp_type(N,"deficit")

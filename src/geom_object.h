@@ -12,6 +12,7 @@
 //#include <stdlib.h>
 
 using namespace std;
+namespace fs = std::experimental::filesystem;
 
 // =======================================================================
 //                                  KOORD
@@ -226,6 +227,43 @@ struct Circle: Geometric_object{
 };
 
 
+void generate_Circles(int N, bool write_to_file = false, string filename = "data/mtx_circles")
+{
+    srand(time(0));
+    //srand (5);
+    // ===== First Cicle: =====
+    Circle c1(Koord(0, 0), 2);
+    c1.generate(N);
+
+    // ===== Second Cicle: =====
+    Circle c2(Koord(0, 0), 1);
+    c2.generate(N);
+
+    // ===== Write to file =====
+    if (write_to_file)
+    {
+        c1.write("data/circles01.txt");
+        c2.write("data/circles02.txt");
+    }
+
+    // Generate incidence mtx:
+    Geometric_object::print_mtx(c1, c2, filename + ".txt");
+    Geometric_object::print_dat(c1, c2, filename + ".dat");
+
+    // Heuristic:
+    //vector<pair<int,int> > sorted=Circle::sort(c1,c2);
+    //Geometric_object::write(sorted,c1, c2, "data/HEUcircles_sorted.txt");
+}
+
+void HUN_for_circles(string filename = "data/mtx_circles", string output = "data/HUNcircles_sorted.txt")
+{
+    Hungarian_method method = Hungarian_method();
+    method.read_mtx(filename + ".txt");
+    method.init();
+    method.alternating_path();
+    method.print_matching(output);
+}
+
 // =======================================================================
 //                                 LINE
 // =======================================================================
@@ -247,7 +285,24 @@ struct Line: Geometric_object{
     }
     
 };
+void generate_Lines(int N, bool write_to_file = false)
+{
+    srand(time(0));
+    //srand (5);
+    // ===== First Line: =====
+    Line l1(Koord(0, 0), Koord(1, 1));
+    l1.generate(N);
 
+    // ===== Second Line: =====
+    Line l2(Koord(0, 1), Koord(2, 4));
+    l2.generate(N);
+
+    if (write_to_file)
+    {
+        l1.write("data/lines01.txt");
+        l2.write("data/lines02.txt");
+    }
+}
 
 
 // =======================================================================
@@ -274,3 +329,152 @@ private:
     int N,M;
     
 };
+
+// ==================================================================
+//                        HUN WITH PICTURES
+// ==================================================================
+double wasserstein_dist(vector<vector<double>> &, vector<vector<double>> &);
+vector<vector<vector<double>>> train0;
+vector<vector<vector<double>>> test0;
+
+void read_picture(std::string filename, vector<vector<double>> &pict, pair<int, int> size)
+{
+    ifstream myfile(filename.c_str());
+    int N = size.first;
+    int M = size.second;
+
+    pict.resize(N, vector<double>(M, 0.0));
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < M; j++)
+        {
+            myfile >> pict[i][j];
+        }
+    }
+}
+
+double euclidian_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
+{
+    int n = 28;
+    int m = 28;
+    double sum = 0;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            sum += abs(p1[i][j] - p2[i][j]) * abs(p1[i][j] - p2[i][j]);
+        }
+    }
+    return sqrt(sum);
+}
+
+double wasserstein_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
+{
+    pair<int, int> size(28, 28);
+
+    Picture picture1(size);
+    Picture picture2(size);
+
+    vector<int> v1, v2;
+
+    for (int i = 0; i < 28; i++)
+    {
+        for (int j = 0; j < 28; j++)
+        {
+            Koord k = Koord(p1[i][j], -1);
+            k.index = i * size.first + j;
+            picture1.add_point(k);
+            v1.push_back(p1[i][j]);
+
+            Koord k2 = Koord(p2[i][j], -1);
+            k2.index = i * size.first + j;
+            picture2.add_point(k2);
+            v2.push_back(p2[i][j]);
+        }
+    }
+
+    // ===== Generate incidence mtx: =====
+    // TODO: not from file
+    Geometric_object::print_mtx(picture1, picture2, "data/mtx_pictures.txt");
+    Geometric_object::print_dat(picture1, picture2, "data/mtx_pictures.dat");
+
+    Hungarian_method method = Hungarian_method();
+    double result = method.run("data/mtx_pictures.txt", "data/HUNpictures_sorted.txt");
+
+    return result;
+}
+
+/**
+ * Description:
+ *     Creates the Incidence graph to a temp file
+ * Parameters:
+ *     N:                        size of the train/test dataset
+ *     size:                     size of the images
+ *     train_folder/test_folder: the folder, where the datasets are
+ */  
+void generate_graph(int N,
+                   pair<int, int> &size,
+                   string& train_folder,
+                   string& test_folder){
+
+    // TODO: for small dataset save into memory instead of hard disc
+    // ===== Create temporary output file =====
+    std::string filename = "/tmp/mnist_mtx.txt";
+    ofstream myfile(filename.c_str());
+    myfile << N << " " << N << endl;
+
+    int n = size.first;
+    int m = size.second;
+
+    // ===== Read test, and train datasets from file =====
+    vector<vector<double>> p1, p2;
+    int iterator = 0;
+    string path;
+    for (const auto &entry : fs::directory_iterator(train_folder))
+    {
+        read_picture(entry.path(), p1, {n, m});
+        train0.push_back(p1);
+        if ((++iterator) > N)
+            break;
+    }
+    iterator = 0;
+    for (const auto &entry : fs::directory_iterator(test_folder))
+    {
+        read_picture(entry.path(), p2, {n, m});
+        test0.push_back(p2);
+        if (++iterator > N)
+            break;
+    }
+
+    // We suppose, that the data is shuffled (during the generation)
+    //     If not: 
+    srand(0); std::random_shuffle ( train0.begin(), train0.end() );
+    srand(1); std::random_shuffle ( test0.begin(), test0.end() );
+    // ===== Generate the Incidence matrix =====
+    for (int i = 0; i < N; i++)
+    {
+        myfile << i << " ";
+        for (int j = 0; j < N; j++)
+        {
+            // TODO: just if we match the dataset with itself
+            if (i == j && 0) myfile << "99999999"<< " ";
+            else
+            {
+                int pict_dist = 1;
+                switch (pict_dist)
+                {
+                case 0: // ===== Matching with Wasserstein distance between pictures =====
+                    myfile << wasserstein_dist(train0[i], test0[j]) << " ";
+                case 1: // ===== Matching with Euclidean distance between pictures =====
+                    myfile << euclidian_dist(train0[i], test0[j]) << " ";
+                }
+            }
+        }
+        myfile << endl;
+    }
+    myfile.close();
+}
+
+
+
+

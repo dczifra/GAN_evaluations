@@ -5,5 +5,8 @@ result
 munkres-tensorflow
 tf_matrix_multiplication
 *.gz
-*.vscode*
+*vscode*
 *_checkpoint*
+*image*.txt
+*.json
+*.txt
