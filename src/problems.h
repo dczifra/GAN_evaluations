@@ -4,7 +4,7 @@
 #include <fstream>
 #include <assert.h>
 
-#include "glpk.h"
+//#include "glpk.h"
 
 using namespace std;
 
