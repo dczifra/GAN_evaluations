@@ -46,12 +46,12 @@ def generate_mnist(N,test=False,):
     # ===== Get MNIST =====
     from keras.datasets import mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    print("Sise of MNIST: ",len(x_train),len(x_test))
+    print("Size of MNIST: ",len(x_train),len(x_test))
 
     # ===== Choose dataset, and create folder(s) =====
-    filename="data/mnist/"+("test" if test else "train")
+    filename="data/mnist/"+("test/data" if test else "train/data")
     data=(x_test if test else x_train)
-    data=np.random.shuffle(data)
+    np.random.shuffle(data)
     if(not os.path.isdir(filename)):
         os.makedirs(filename)
         
@@ -74,11 +74,12 @@ def process_modell(model_filename,sample_size=2000,generate=False):
 
     args=["bin/main",
         "-size","28,28",
-        "-folder1","data/mnist/train",\
+        "-folder1","data/mnist/train/data",\
         "-folder2",model_filename+"/data","-N 2000","-range 100",\
         "-out"]
 
     os.system(" ".join(args+[model_filename+"/compare.txt"]))
+    print(" ".join(args+[model_filename+"/compare.txt"]))
     os.system(" ".join(args+[model_filename+"/flow.txt","-flow"]))
     os.system(" ".join(args+[model_filename+"/deficit.txt","-deficit"]))
     #os.system(" ")
@@ -87,7 +88,8 @@ def process_modell(model_filename,sample_size=2000,generate=False):
 
 if(__name__=="__main__"):
     process_modell("data/mnist/test")
-    process_modell("models/wgan/generator_1000")
-    process_modell("models/wgan-gp/generator_1000")
+    exit(1)
+    process_modell("models/wgan/generator_1000",generate=True)
+    process_modell("models/wgan-gp/generator_1000",generate=True)
     
 

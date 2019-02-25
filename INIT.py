@@ -5,7 +5,7 @@ from scripts.post_model import generate_mnist,generate_samples,get_model
 import os
 generate_mnist(sample_size,True)
 generate_mnist(sample_size,False)
-
+exit(1)
 # ===== Generate data from GAN models 1000 =====
 gen_model=get_model("models/wgan/generator_1000")
 generate_samples(gen_model,"data/mnist/wgan_1000",sample_size)
