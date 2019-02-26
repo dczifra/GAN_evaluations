@@ -15,11 +15,12 @@ void create_min_cost_perf_match_problem(vector<vector<Type> >& mtx);
 
 template<typename Type>
 class Flow{
+    bool dijkstra( int n, int s, int t );
 public:
     // Miinimum Cost Maximum Flow
     int mcmf3( int n, int s, int t, int &fcost );
     int run_mcmf(string filename);
-    int minCost_maxMatching_flow(vector<vector<Type> > mtx);
+    pair<int,int> minCost_maxMatching_flow(vector<vector<Type> > mtx);
 
 };
 

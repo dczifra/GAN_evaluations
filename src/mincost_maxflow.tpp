@@ -44,7 +44,6 @@
 #include "problems.h"
 
 using namespace std;
-
 // the maximum number of vertices + 1
 #define NN 5000
 
@@ -65,10 +64,11 @@ int pi[NN];
 
 #define CLR(a, x) memset( a, x, sizeof( a ) )
 #define Inf (INT_MAX/2)
-
 // Dijkstra's using non-negative edge weights (cost + potential)
 #define Pot(u,v) (d[u] + pi[u] - pi[v])
-bool dijkstra( int n, int s, int t )
+
+template<typename Type>
+bool Flow<Type>::dijkstra( int n, int s, int t )
 {
     for( int i = 0; i < n; i++ ) d[i] = Inf, par[i] = -1;
     d[s] = 0;
@@ -143,7 +143,7 @@ int Flow<Type>::mcmf3( int n, int s, int t, int &fcost )
 using namespace std;
 
 template<typename Type>
-int Flow<Type>::minCost_maxMatching_flow(vector<vector<Type> > mtx){
+pair<int,int> Flow<Type>::minCost_maxMatching_flow(vector<vector<Type> > mtx){
     assert(mtx.size()>0);
     int N=mtx.size();
     int M=mtx[0].size();
@@ -190,7 +190,7 @@ int Flow<Type>::minCost_maxMatching_flow(vector<vector<Type> > mtx){
     cout << "flow: " << flow << endl;
     cout << "cost: " << fcost << endl;
 
-    return fcost;
+    return {fcost,flow};
 
 }
 

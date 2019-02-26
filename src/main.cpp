@@ -8,9 +8,16 @@
 //        * Ramdom points from circles
 //        * Random points from lines
 //        * MNIST data
+//    --> Contains different GAN evaluation metrics, such as 
+//        * Minimum Cost Perfect Matching (Hungarian/Flow mode)
+//        * Deficit Score
+//        * FlowDeficit Score: dropout some edges, and find a 
+//            mincost maxflow. The avarage 
 // Dependencies:
-//    --> g++ -g -std=c++17 -o bin/main src/main.cpp -lstdc++fs
-//    --> bin/main
+//    --> c++17, filesystem
+// Complile and run with: 
+//    --> g++ -O3 -std=c++17 -o bin/main src/main.cpp -lstdc++fs
+//    --> bin/main --ini params/params.ini
 // Author:
 //    --> Domonkos Czifra, ELTE (Budapest, Hungary), 2019
 //
@@ -49,19 +56,26 @@ double match_mnist(int N)
     return result/N;
 }
 
+
 struct Menu
 {
-    bool show_help = false;
+    enum Mode{DEFAULT=0, HELP, DEFICIT, FLOW, DEFFLOW};
+
     string folder1 = "data/mnist/train";
     string folder2 = "data/mnist/test";
     pair<int, int> size = {28, 228};
     int N = 10;
     int range = -1;
     string out = "NO_OUTFILE_IS_GIVEN";
-    bool deficit=false;
-    bool flow=false;
+    Mode myMode=DEFAULT;
 };
 
+const char* helpmessage="Description:\n   Min cost matching of the two picture sets\n"
+"usage: main [-h] [-size] [-folder1] [-folder2] [-N] [-range] [-out] \n\n"
+"Example: ./bin/main -size 28,28 -folder1 data/mnist/train"
+" -folder2 data/mnist/test -N 10\n"
+"Compile with: g++ -O3 -std=c++17 -o bin/main src/main.cpp -lstdc++fs \n";
+            
 Menu *help(vector<string> argv)
 {
     Menu *m = new Menu();
@@ -70,12 +84,8 @@ Menu *help(vector<string> argv)
         //cout<<(string) argv[i]<<endl;
         if ((string)argv[i] == "-h" || (string)argv[i] == "--help")
         {
-            cout << "Description:\n"
-                 << "   Min cost matching of the two picture sets\n"
-                 << "usage: main [-h] [-size] [-folder1] [-folder2] [-N] [-range] [-out] \n\n"
-                 << "Example: ./bin/main -size 28,28 -folder1 data/mnist/train -folder2 data/mnist/test -N 10\n"
-                 << "Compile with: g++ -g -std=c++17 -o bin/main src/main.cpp -lstdc++fs \n";
-            m->show_help = true;
+            cout <<helpmessage;
+            m->myMode=Menu::HELP;
         }
         else if ((string)argv[i] == "--ini")
         {
@@ -86,17 +96,8 @@ Menu *help(vector<string> argv)
             while (inifile>>temp)
             {
                 argv.push_back(temp);
-                //inifile >> temp;
             }
             return help(argv);
-        }
-        else if ((string)argv[i] == "-folder1")
-        {
-            m->folder1 = argv[++i];
-        }
-        else if ((string)argv[i] == "-folder2")
-        {
-            m->folder2 = argv[++i];
         }
         else if ((string)argv[i] == "-size")
         {
@@ -106,26 +107,14 @@ Menu *help(vector<string> argv)
             getline(ss, second, ',');
             m->size = {stoi(first), stoi(second)};
         }
-        else if ((string)argv[i] == "-N")
-        {
-            m->N = stoi(argv[++i]);
-        }
-        else if ((string)argv[i] == "-range")
-        {
-            m->range = stoi(argv[++i]);
-        }
-        else if ((string)argv[i] == "-out")
-        {
-            m->out = argv[++i];
-        }
-        else if ((string)argv[i] == "-deficit")
-        {
-            m->deficit = true;
-        }
-        else if ((string)argv[i] == "-flow")
-        {
-            m->flow = true;
-        }
+        else if ((string)argv[i] == "-folder1")m->folder1 = argv[++i];
+        else if ((string)argv[i] == "-folder2")m->folder2 = argv[++i];
+        else if ((string)argv[i] == "-N")m->N = stoi(argv[++i]);
+        else if ((string)argv[i] == "-range")m->range = stoi(argv[++i]);
+        else if ((string)argv[i] == "-out")m->out = argv[++i];
+        else if ((string)argv[i] == "-deficit")m->myMode=Menu::DEFICIT;
+        else if (argv[i] == "-flow")    m->myMode=Menu::FLOW;
+        else if (argv[i] == "-defFlow") m->myMode=Menu::DEFFLOW;
     }
     return m;
 }
@@ -140,15 +129,28 @@ double deficit(int i){
     return ((double) p.first/p.second)*100.0;
 }
 
+pair<double,double> deficitFlow(int i,int N){
+    Hungarian_method method = Hungarian_method();
+    method.read_mtx("/tmp/mnist_mtx.txt");
+    method.init();
+
+    method.sparse_all(i);
+    vector<vector<long double> > mtx=method.get_mtx();
+    Flow<long double> f;
+    auto ret=f.minCost_maxMatching_flow(mtx);
+    return {((double)ret.first)/N,ret.second};
+
+}
+
 double flowMatching(int N){
     vector<vector<double> > mtx;
     beolv<double>(mtx,"/tmp/mnist_mtx.txt",N);
     Flow<double> f;
-    return f.minCost_maxMatching_flow(mtx)/N;
+    return ((double) f.minCost_maxMatching_flow(mtx).first)/N;
 }
 
 // ====================================================================
-//                                  MAIN
+//                                MAIN
 // ====================================================================
 int main(int argc, char *argv[])
 {
@@ -161,20 +163,30 @@ int main(int argc, char *argv[])
         argv_.push_back((string)argv[i]);
     
     Menu *m = help(argv_);
-    if (m->show_help)
+    if (m->myMode==Menu::HELP)
         return 1;
-    else if(m->deficit){
+    else if(m->myMode==Menu::DEFICIT || m->myMode==Menu::DEFFLOW){
         generate_graph(m->N,m->size, m->folder1, m->folder2);
 
         myfile.open(m->out);
-        myfile<<1<<" "<<100<<" "<<1<<endl; // [begin end range_by]
+        myfile<<1<<" "<<30<<" "<<1<<endl; // [begin end range_by]
 
-        for(int i=1;i<100;i++){
+        vector<double> flow;
+        for(int i=1;i<=30;i++){
             cout<<"\r"<<i;
             std::cout.flush();
-            myfile << deficit(i )<<" ";
+            if(m->myMode==Menu::DEFICIT) myfile << deficit(i )<<" ";
+            else if(m->myMode==Menu::DEFFLOW){
+                pair<double,double> ret=deficitFlow(i,m->N);
+                myfile<<ret.first<<" ";
+                flow.push_back(ret.second);
+            }
         }
         cout<<endl;
+
+        // ===== Print the amount of the flow if neccessary =====
+        myfile<<endl;
+        for(auto val: flow) myfile<<val<<" ";
     }
     else if (m->range > 0)
     {
@@ -184,7 +196,7 @@ int main(int argc, char *argv[])
         for (int i = 1; m->range * i <= m->N; i++)
         {
             generate_graph(m->range*i,m->size, m->folder1, m->folder2);
-            if(m->flow) myfile<<flowMatching(m->range*i)<<" ";
+            if(m->myMode==Menu::FLOW) myfile<<flowMatching(m->range*i)<<" ";
             else myfile << match_mnist(m->range*i) << " ";
         }
     }

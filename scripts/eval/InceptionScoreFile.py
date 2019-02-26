@@ -5,7 +5,7 @@
 import sys
 import tensorflow as tf
 import numpy as np
-import InceptionScore as IS
+import eval.InceptionScore as IS
 
 def nchw2nhwc(imgs):
     return np.transpose(imgs, [0, 2, 3, 1])

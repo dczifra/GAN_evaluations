@@ -1,6 +1,6 @@
 import numpy as np
 import os
-import FID
+import eval.FID
 from keras.datasets import mnist
 
 def calc_fid(train,test,out="FID_mnist_train_test.txt"):
@@ -13,17 +13,18 @@ def calc_fid(train,test,out="FID_mnist_train_test.txt"):
     for i in range(r,r+N,r):
         np.random.shuffle(train)
         np.random.shuffle(test)
-        res=FID.FID(train[i:i+r+1],test[i:i+r+1])
+        res=eval.FID.FID(train[i:i+r+1],test[i:i+r+1])
         print(res)
         myrange.append(res)
         myfile.write(str(res)+" ")
 
-    
+    myfile.close()
     import matplotlib.pyplot as plt
     plt.plot(range(r,N+r,r),myrange)
 
 
 def read_dataset(path):
+    print(path)
     dataset=[]
     for file in os.listdir(path):
         mystream=open(path+file)
@@ -34,14 +35,21 @@ def read_dataset(path):
         mystream.close()
     
     size=np.shape(dataset)
+    print(size)
     dataset=np.resize(dataset,(-1,1,size[1],size[2]))
     dataset=np.repeat(dataset,3,1)
     np.random.shuffle(dataset)
     print(np.shape(dataset))
     return dataset
+
+def fid_score(train_file,test_file):
+    train=read_dataset(train_file+"/data/")
+    test=read_dataset(test_file+"/data/")
+    calc_fid(train,test,test_file+"/fidscore.txt")
     
 
-#mnist()
-train=read_dataset("data/mnist/train/")
-test=read_dataset("data/mnist/wgan_1000/")
-calc_fid(train,test,"eval/mnist_train_wgan.fid")
+if(__name__=="__main__"):
+    1
+    #train=read_dataset("data/mnist/train/data")
+    #test=read_dataset("data/mnist/wgan_1000/")
+    #calc_fid(train,test,"eval/mnist_train_wgan.fid")

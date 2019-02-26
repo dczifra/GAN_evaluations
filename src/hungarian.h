@@ -51,6 +51,9 @@ public:
             }
         }
     }
+    vector<vector<long double> > get_mtx(){
+        return mtx;
+    }
     void init(){
         // ===== Initialization =====
         y[S].resize(N,0.0);
@@ -88,7 +91,7 @@ public:
         nth_element(temp.begin(),temp.begin()+N_,temp.end());
         for(int i=0;i<mtx[node_ID].size();i++){
             if(mtx[node_ID][i]>temp[N_-1]){
-                mtx[node_ID][i]=LONG_MAX;
+                mtx[node_ID][i]=INT_MAX;
             }
         }
     }

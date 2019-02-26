@@ -6,7 +6,7 @@ import tensorflow as tf
 import sys
 import numpy as np
 
-import FID as F
+import eval.FID as F
 
 def nchw2nhwc(imgs):
     return np.transpose(imgs, [0, 2, 3, 1])

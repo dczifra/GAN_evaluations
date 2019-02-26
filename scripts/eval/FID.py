@@ -6,7 +6,7 @@ import tensorflow as tf
 from scipy import linalg
 import numpy as np
 
-import InceptionScore as IN
+import eval.InceptionScore as IN
 
 
 BATCH_SIZE = 100

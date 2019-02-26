@@ -1,7 +1,9 @@
 from keras.models import load_model
 from keras.models import model_from_json
+from eval.try_eval import fid_score
 import numpy as np
 import os
+import sys
 
 def get_model(model_file):
     # load json and create model
@@ -75,21 +77,29 @@ def process_modell(model_filename,sample_size=2000,generate=False):
     args=["bin/main",
         "-size","28,28",
         "-folder1","data/mnist/train/data",\
-        "-folder2",model_filename+"/data","-N 2000","-range 100",\
+        "-folder2",model_filename+"/data","-N 1000","-range 100",\
         "-out"]
 
+    fid_score("data/mnist/train",model_filename)
     os.system(" ".join(args+[model_filename+"/compare.txt"]))
-    print(" ".join(args+[model_filename+"/compare.txt"]))
     os.system(" ".join(args+[model_filename+"/flow.txt","-flow"]))
     os.system(" ".join(args+[model_filename+"/deficit.txt","-deficit"]))
-    #os.system(" ")
+    os.system(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]))
+    
 
-
+def run_all():
+    gen=True
+    process_modell("data/mnist/test")
+    for N in [1000,5000,10000]:
+        process_modell("models/wgan/generator_{}".format(N),generate=gen)
+        process_modell("models/wgan-gp/generator_{}".format(N),generate=gen)
 
 if(__name__=="__main__"):
-    process_modell("data/mnist/test")
+    run_all()
     exit(1)
-    process_modell("models/wgan/generator_1000",generate=True)
-    process_modell("models/wgan-gp/generator_1000",generate=True)
+    gen=('True'==sys.argv[1])
+    print(gen)
+    process_modell("data/mnist/test")
+    
     
 
