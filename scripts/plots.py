@@ -7,7 +7,9 @@ def different_model_compare( files,title,labels,
 
     colors=['r','g','b','y','p']
     fig, ax1 = plt.subplots()
-    if(second): ax2=ax1.twinx()
+    if(second): 
+        ax2=ax1.twinx()
+        ax2.set_ylabel("Value of the flow/Max matching")
 
     i=0
     for file in files:
@@ -29,25 +31,6 @@ def different_model_compare( files,title,labels,
     ax1.legend()
     plt.show()
 
-"""
-def wgan():
-    title="WGAN Párosítás-Pontszám "
-    labels=["wgan 1000","wgan 5000","wgan 10000"]
-    different_model_compare( files=["data/plot/train-wgan_compare_1000.txt",
-            "data/plot/train-wgan_compare_5000.txt",
-            "data/plot/train-wgan_compare_10000.txt"],
-            title=title,
-            labels=labels)
-
-def wgan_wgan_gp(N):
-    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
-    labels=["test","wgan","wgan-gp","FID"]
-    different_model_compare( files=["data/plot/train-test_compare.txt",
-            "data/plot/train-wgan_compare_{}.txt".format(N),
-            "data/plot/train-wgan-gp_compare_{}.txt".format(N)],
-            title=title,
-            labels=labels)
-            """
 
 def wgan_wgan_gp_type(N,type,second=False):
     title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
@@ -59,12 +42,20 @@ def wgan_wgan_gp_type(N,type,second=False):
             labels=labels,second=second)
 
 def model_type(N,model,type,second=False):
-    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
+    title="{} {}".format(model,type)
     labels=["test",model+" 1000",model+" 5000", model+" 10000"]
     different_model_compare( files=["data/mnist/test/{}.txt".format(type),
             "models/{}/generator_{}/{}.txt".format(model,1000,type),
             "models/{}/generator_{}/{}.txt".format(model,5000,type),
             "models/{}/generator_{}/{}.txt".format(model,10000,type)],
+            title=title,
+            labels=labels,second=second)
+
+def new_model_type(N,model,type,second=False):
+    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
+    labels=["test",model+" 1000",model+" 5000", model+" 10000"]
+    different_model_compare( files=["data/mnist/test/{}.txt".format(type),
+            "models/{}/{}.txt".format(model,type)],
             title=title,
             labels=labels,second=second)
 
@@ -77,31 +68,17 @@ def FID_for_MNIST():
             "eval/mnist_train_wgan-gp.fid"],
             title=title,
             labels=labels)
-"""
-def deficit():
-    title="WGAN, WGAN-GP Deficit-Pontszám"
-    labels=["wgan-gp 1000","wgan 1000","test"]
-    different_model_compare( files=[
-            "data/plot/train-wgan-gp_compare_1000.txtdeficit",
-            "data/plot/train-wgan_compare_1000.txtdeficit",
-            "data/plot/train-test_compare_.txtdeficit"],
-            title=title,
-            labels=labels,
-            xlabel="Adathalmaz mérete",ylabel="FID score",r=[0,30])"""
 
-#wgan_wgan_gp(1000)
-#wgan_wgan_gp(5000)
-#wgan_wgan_gp(10000)
-#deficit()
-#wgan()
 if(__name__=="__main__"):
     #FID_for_MNIST()
     if(len(sys.argv)>1):
         N=int(sys.argv[1])
     else: N=1000
 
-    model="wgan-gp"
-    for type in ["compare","flow","deficit","defFlow","fid_score"]:
-        model_type(N,model,type,type=="defFlow")
-        #wgan_wgan_gp_type(N,type,type=="defFlow")
+    models=["wgan","wgan-gp","downloaded/lsgan_mnist","downloaded/wgan_mnist"]
+    for type in ["compare","flow","deficit","defFlow"]:#,"fid_score"]:
+        #new_model_type(N,models[2],type,type=="defFlow")
+        model_type(N,models[0],type,type=="defFlow")
+        model_type(N,models[1],type,type=="defFlow")
+        wgan_wgan_gp_type(N,type,type=="defFlow")
     exit()

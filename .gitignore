@@ -10,3 +10,4 @@ tf_matrix_multiplication
 *image*.txt
 *.json
 *.txt
+*__pycache__*

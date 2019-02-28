@@ -40,23 +40,6 @@ template class Flow<double>;
 
 using namespace std;
 
-/**
- * Description:
- *     Returns the perfect matching between the two picture dataset
- * Parameters:
- *     N:                        size of the train/test dataset
- *     size:                     size of the images
- *     train_folder/test_folder: the folder, where the datasets are
- */  
-double match_mnist(int N)
-{
-    Hungarian_method method = Hungarian_method();
-    //std::cout << "The matching between the pictures:\n";
-    double result = method.run("/tmp/mnist_mtx.txt", "data/mnist_result2.txt");
-    return result/N;
-}
-
-
 struct Menu
 {
     enum Mode{DEFAULT=0, HELP, DEFICIT, FLOW, DEFFLOW};
@@ -117,6 +100,22 @@ Menu *help(vector<string> argv)
         else if (argv[i] == "-defFlow") m->myMode=Menu::DEFFLOW;
     }
     return m;
+}
+
+/**
+ * Description:
+ *     Returns the perfect matching between the two picture dataset
+ * Parameters:
+ *     N:                        size of the train/test dataset
+ *     size:                     size of the images
+ *     train_folder/test_folder: the folder, where the datasets are
+ */  
+double match_mnist(int N,string folder2)
+{
+    Hungarian_method method = Hungarian_method();
+    //std::cout << "The matching between the pictures:\n";
+    double result = method.run("/tmp/mnist_mtx.txt", folder2+"/../mnist_result.txt");
+    return result/N;
 }
 
 double deficit(int i){
@@ -197,13 +196,13 @@ int main(int argc, char *argv[])
         {
             generate_graph(m->range*i,m->size, m->folder1, m->folder2);
             if(m->myMode==Menu::FLOW) myfile<<flowMatching(m->range*i)<<" ";
-            else myfile << match_mnist(m->range*i) << " ";
+            else myfile << match_mnist(m->range*i,m->folder2) << " ";
         }
     }
     else
     {
         generate_graph(m->N,m->size, m->folder1, m->folder2);
-        match_mnist(m->N);
+        match_mnist(m->N,m->folder2);
     }
 
     myfile.close();
