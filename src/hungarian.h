@@ -38,18 +38,31 @@ class Hungarian_method{
 public:
     Hungarian_method(){}
 
-    void read_mtx(string filename){
+    void read_mtx(string filename, int maxN){
         fstream myfile(filename.c_str());
 
         myfile>>N>>M;
 
-        mtx.resize(N,vector<long double>(M,0.0));
+        maxN=min(N,maxN);
+
+        mtx.resize(maxN,vector<long double>(maxN,0.0));
         for(int i=0;i<N;i++){
-            myfile>>i;
+            int trash;
+            myfile>>trash;
             for(int j=0;j<M;j++){
-                myfile>>mtx[i][j];
+                long double temp;
+                myfile>>temp;
+                int t=(int) temp;
+                if(i<maxN && j<maxN){
+                    mtx[i][j]=(long double) t;
+                }
             }
         }
+        N=maxN;
+        M=maxN;
+
+        //cout<<"end"<<endl;
+        myfile.close();
     }
     vector<vector<long double> > get_mtx(){
         return mtx;
@@ -65,8 +78,8 @@ public:
         matching[T].resize(M,-1);
     }
 
-    double run(std::string file_in, std::string file_out){
-        read_mtx(file_in);
+    double run(std::string file_in, std::string file_out, int N){
+        read_mtx(file_in, N);
         init();
         alternating_path();
         double ret=print_matching(file_out);

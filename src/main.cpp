@@ -42,7 +42,7 @@ using namespace std;
 
 struct Menu
 {
-    enum Mode{DEFAULT=0, HELP, DEFICIT, FLOW, DEFFLOW};
+    enum Mode{DEFAULT=0, HELP, DEFICIT, FLOW, DEFFLOW, ALL};
 
     string folder1 = "data/mnist/train";
     string folder2 = "data/mnist/test";
@@ -98,6 +98,7 @@ Menu *help(vector<string> argv)
         else if ((string)argv[i] == "-deficit")m->myMode=Menu::DEFICIT;
         else if (argv[i] == "-flow")    m->myMode=Menu::FLOW;
         else if (argv[i] == "-defFlow") m->myMode=Menu::DEFFLOW;
+        else if (argv[i] == "-all") m->myMode=Menu::ALL;
     }
     return m;
 }
@@ -114,13 +115,14 @@ double match_mnist(int N,string folder2)
 {
     Hungarian_method method = Hungarian_method();
     //std::cout << "The matching between the pictures:\n";
-    double result = method.run("/tmp/mnist_mtx.txt", folder2+"/../mnist_result.txt");
+    string match_outfile=folder2+"/../mnist_result_"+to_string(N)+".txt";
+    double result = method.run("/tmp/mnist_mtx.txt", match_outfile,N);
     return result/N;
 }
 
-double deficit(int i){
+double deficit(int i, int N){
     Hungarian_method method = Hungarian_method();
-    method.read_mtx("/tmp/mnist_mtx.txt");
+    method.read_mtx("/tmp/mnist_mtx.txt",N);
     method.init();
 
     method.sparse_all(i);
@@ -130,7 +132,7 @@ double deficit(int i){
 
 pair<double,double> deficitFlow(int i,int N){
     Hungarian_method method = Hungarian_method();
-    method.read_mtx("/tmp/mnist_mtx.txt");
+    method.read_mtx("/tmp/mnist_mtx.txt",N);
     method.init();
 
     method.sparse_all(i);
@@ -138,7 +140,6 @@ pair<double,double> deficitFlow(int i,int N){
     Flow<long double> f;
     auto ret=f.minCost_maxMatching_flow(mtx);
     return {((double)ret.first)/N,ret.second};
-
 }
 
 double flowMatching(int N){
@@ -164,17 +165,24 @@ int main(int argc, char *argv[])
     Menu *m = help(argv_);
     if (m->myMode==Menu::HELP)
         return 1;
+    else if(m->myMode==Menu::ALL){
+        generate_graph(m->N,m->size, m->folder1, m->folder2);
+        for(int i=1;i<10;i++){
+            match_mnist(m->range*i,m->folder2);
+        }
+        flowMatching(m->N);
+    }
     else if(m->myMode==Menu::DEFICIT || m->myMode==Menu::DEFFLOW){
         generate_graph(m->N,m->size, m->folder1, m->folder2);
 
         myfile.open(m->out);
-        myfile<<1<<" "<<30<<" "<<1<<endl; // [begin end range_by]
+        myfile<<1<<" "<<40<<" "<<1<<endl; // [begin end range_by]
 
         vector<double> flow;
-        for(int i=1;i<=30;i++){
+        for(int i=1;i<=40;i+=2){
             cout<<"\r"<<i;
             std::cout.flush();
-            if(m->myMode==Menu::DEFICIT) myfile << deficit(i )<<" ";
+            if(m->myMode==Menu::DEFICIT) myfile << deficit(i, m->N)<<" ";
             else if(m->myMode==Menu::DEFFLOW){
                 pair<double,double> ret=deficitFlow(i,m->N);
                 myfile<<ret.first<<" ";
@@ -187,14 +195,16 @@ int main(int argc, char *argv[])
         myfile<<endl;
         for(auto val: flow) myfile<<val<<" ";
     }
-    else if (m->range > 0)
+    else if (m->myMode==Menu::FLOW || m->myMode==Menu::DEFAULT)
     {
+        cout<<"Matching : \n";
+        generate_graph(m->N,m->size, m->folder1, m->folder2);
         myfile.open(m->out);
         myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
         
         for (int i = 1; m->range * i <= m->N; i++)
         {
-            generate_graph(m->range*i,m->size, m->folder1, m->folder2);
+            //generate_graph(m->range*i,m->size, m->folder1, m->folder2);
             if(m->myMode==Menu::FLOW) myfile<<flowMatching(m->range*i)<<" ";
             else myfile << match_mnist(m->range*i,m->folder2) << " ";
         }

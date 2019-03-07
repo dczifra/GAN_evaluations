@@ -179,7 +179,7 @@ pair<int,int> Flow<Type>::minCost_maxMatching_flow(vector<vector<Type> > mtx){
             a=i;b=N+j;
             myCap=1;
             myCost=mtx[i-1][j-1];
-            if(myCost>9999) myCap=0;
+            if(myCost>99999) myCap=0;
             cost[a][b] = myCost;
             cap[a][b] = myCap;
         }

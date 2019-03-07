@@ -13,7 +13,7 @@ supply1{j in J}: sum{i in I}match[i,j]=1;
 solve;
 
 
-param f, symbolic := "data/GLPKpictures_sorted.txt";
+param f, symbolic := "data/test/test3.out";
 printf "" >f;
 for{i in I} {
     for{j in J: match[i,j]>0}{

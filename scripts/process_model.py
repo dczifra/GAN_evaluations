@@ -4,9 +4,11 @@ from eval.try_eval import fid_score
 import numpy as np
 import os
 import sys
+import time
 
 class Models:
     nojson=False
+    myTimer=None
 
     def get_model(model_file):
         if(Models.nojson):
@@ -65,7 +67,7 @@ class Models:
             os.makedirs(filename)
             
         for i in range(min(N,len(data))):
-            myfile=open(filename+"/number_"+str(i)+".txt","w")
+            myfile=open(filename+"/image_"+str(i)+".txt","w")
             for row in data[i]:
                 for elem in row:
                     myfile.write(str(elem)+" ")
@@ -76,26 +78,41 @@ class Models:
         gen_model=Models.get_model("data/mnist_wgan/generator_1000")
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
+    def stretching_limits():
+        for N in range(200,601,200):
+            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data \
+            -folder2 models/wgan-gp/generator_1000/data -N {} -range 200 \
+            -out models/wgan-gp/generator_1000/compare.txt".format(N)
+        Models.measure_process(cmd,"Hun",N,"")
+    
     def process_modell(model_filename,sample_size=2000,generate=False):
         if(generate):
             gen_model=Models.get_model(model_filename)
             Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
+        N=250
+        r=50
         args=["bin/main",
             "-size","28,28",
             "-folder1","data/mnist/train/data",\
-            "-folder2",model_filename+"/data","-N 1000","-range 100",\
+            "-folder2",model_filename+"/data","-N {}".format(N),"-range {}".format(r),\
             "-out"]
 
+        print(" ".join(args+[model_filename+"/compare.txt"]))
+        Models.myTimer.write("{}:\n".format(model_filename))
+        Models.measure_process(" ".join(args+[model_filename+"/compare.txt"]),"Hun",N,r)
+        Models.measure_process(" ".join(args+[model_filename+"/flow.txt","-flow"]),"Flow",N,r)
+        Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",N,r)
+        Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
         #fid_score("data/mnist/train",model_filename)
-        os.system(" ".join(args+[model_filename+"/compare.txt"]))
-        os.system(" ".join(args+[model_filename+"/flow.txt","-flow"]))
-        os.system(" ".join(args+[model_filename+"/deficit.txt","-deficit"]))
-        os.system(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]))
-        
 
-    def run_all():
-        gen=True
+    def measure_process(command, type_,N,r):
+        start=time.time()
+        os.system(command)
+        p1=time.time()
+        Models.myTimer.write("{} with N={} range={} : {} \n".format(type_,N,r,p1-start))
+
+    def run_all(gen=False):
         Models.nojson=False
         Models.process_modell("data/mnist/test")
         #for N in [1000,5000,10000]:
@@ -114,7 +131,13 @@ class Models:
 
 if(__name__=="__main__"):
     #Models.new_models()
-    Models.run_all()
+    Models.myTimer=open("limits.txt","w")
+    Models.stretching_limits()
+    Models.myTimer.close()
+
+    Models.myTimer=open("mytimer.txt","w")
+    Models.run_all(sys.argv[1])
+    Models.myTimer.close()
     exit()
 
     gen=('True'==sys.argv[1])

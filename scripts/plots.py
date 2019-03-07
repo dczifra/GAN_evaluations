@@ -31,6 +31,113 @@ def different_model_compare( files,title,labels,
     ax1.legend()
     plt.show()
 
+def read_model_data(model_path,mod2="image"):
+    model_data=[]
+    for i in range(2000):
+        myfile=open(model_path+"/{}_{}.txt".format(mod2,i))
+        mtx=[]
+        for line in myfile:
+            mtx.append(line[:-2].split(' '))
+        mtx=[[float(e) for e in row] for row in mtx]
+        model_data.append(mtx)
+    return model_data
+
+def read_mathcing(mathing_file):
+    myfile=open(mathing_file)
+    match=[]
+
+    for line in myfile:
+        a,b,cost=line[:-1].split(' ')
+        a,b=int(a),int(b)
+        match.append([a,b,cost])
+    
+    return match
+
+
+def trash(model_data1,model_data2):
+    print(np.shape(model_data1), np.shape(model_data2),np.shape(match))
+
+    for row in model_data2[0]:
+        for e in row:
+            print("{} ".format(e),end='')
+        print('')
+    
+    for i in range(10):
+        for j in range(10):
+            vect=np.array(model_data1[i])-np.array(model_data2[j])
+            vect=np.reshape(vect,(28*28))
+            l2=np.linalg.norm(vect,2)
+
+            print("{} ".format(int(l2)),end='')
+        print("")
+
+    for i in range(10):
+        for j in range(10):
+            vect=np.array(model_data1[i])-np.array(model_data2[j])
+            vect=np.reshape(vect,(28*28))
+            l2=np.linalg.norm(vect,2)
+
+            print("{} ".format(int(l2)),end='')
+        print("")
+
+    sum0=0
+    for i in range(28):
+        for j in range(28):
+            sum0+=(model_data1[0][i][j]-model_data2[0][i][j])**2 
+    print(sum0,np.sqrt(sum0))
+
+
+def print_pictures(pict1, pict2, score):
+    N=len(score)
+    plt.figure(figsize=(N,2))
+    for i in range(N):
+        vect=np.array(pict1[i])-np.array(pict2[i])
+        vect=np.reshape(vect,(28*28))
+        print(i,np.linalg.norm(vect,2))
+        ax=plt.subplot(2,N,i+1)
+        plt.imshow(pict1[i])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax.set_title(score[i])
+        
+        ax=plt.subplot(2,N,N+i+1)
+        plt.imshow(pict2[i])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    plt.show()
+
+def plot_matching_pairs(model_path1, model_path2, matching_file):
+    model_data1=read_model_data(model_path1)
+    model_data2=read_model_data(model_path2)
+
+    match=read_mathcing(matching_file)
+
+    
+
+    # ===== Print first 10 pair of matching ====
+    N=10
+    pict1=[model_data1[match[i][0]] for i in range(N)]
+    pict2=[model_data2[match[i][1]] for i in range(N)]
+    score=[match[i][2] for i in range(N)]
+
+    scores=[int(match[i][2]) for i in range(len(match))]
+    print(min(scores),max(scores))
+
+    print_pictures(pict1,pict2,score)
+    # ===== Print 10 best picture =====
+    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores.sort()
+    scores=scores[:10]
+    pict1=[model_data1[match[int(i)][0]] for _,i in scores]
+    pict2=[model_data2[match[int(i)][1]] for _,i in scores]
+    score=[match[int(i)][2] for _,i in scores]
+    print_pictures(pict1,pict2,score)
+
+
+
+    #print(model_data1[0])
+
+
 
 def wgan_wgan_gp_type(N,type,second=False):
     title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
@@ -71,14 +178,21 @@ def FID_for_MNIST():
 
 if(__name__=="__main__"):
     #FID_for_MNIST()
-    if(len(sys.argv)>1):
+    if(len(sys.argv)>2):
+        plot_matching_pairs("data/mnist/train/data","models/wgan/generator_1000/data",
+            "models/wgan/generator_1000/mnist_result1000_.txt")
+        plot_matching_pairs("data/mnist/train/data","models/wgan-gp/generator_1000/data",
+            "models/wgan-gp/generator_1000/mnist_result1000_.txt")
+        N=int(sys.argv[1])
+        exit()
+    elif(len(sys.argv)>1):
         N=int(sys.argv[1])
     else: N=1000
 
     models=["wgan","wgan-gp","downloaded/lsgan_mnist","downloaded/wgan_mnist"]
     for type in ["compare","flow","deficit","defFlow"]:#,"fid_score"]:
         #new_model_type(N,models[2],type,type=="defFlow")
-        model_type(N,models[0],type,type=="defFlow")
-        model_type(N,models[1],type,type=="defFlow")
+        #model_type(N,models[0],type,type=="defFlow")
+        #model_type(N,models[1],type,type=="defFlow")
         wgan_wgan_gp_type(N,type,type=="defFlow")
     exit()

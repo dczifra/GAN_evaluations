@@ -9,6 +9,7 @@
 #include <limits>
 #include <algorithm>
 #include <chrono>
+#include <experimental/filesystem>
 //#include <stdlib.h>
 
 using namespace std;
@@ -258,7 +259,7 @@ void generate_Circles(int N, bool write_to_file = false, string filename = "data
 void HUN_for_circles(string filename = "data/mtx_circles", string output = "data/HUNcircles_sorted.txt")
 {
     Hungarian_method method = Hungarian_method();
-    method.read_mtx(filename + ".txt");
+    method.read_mtx(filename + ".txt",100);
     method.init();
     method.alternating_path();
     method.print_matching(output);
@@ -399,7 +400,7 @@ double wasserstein_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
     Geometric_object::print_dat(picture1, picture2, "data/mtx_pictures.dat");
 
     Hungarian_method method = Hungarian_method();
-    double result = method.run("data/mtx_pictures.txt", "data/HUNpictures_sorted.txt");
+    double result = method.run("data/mtx_pictures.txt", "data/HUNpictures_sorted.txt",size.first);
 
     return result;
 }
@@ -432,7 +433,10 @@ void generate_graph(int N,
     string path;
     for (const auto &entry : fs::directory_iterator(train_folder))
     {
-        read_picture(entry.path(), p1, {n, m});
+        //read_picture(entry.path(), p1, {n, m});
+        string path=train_folder+"/image_"+to_string(iterator)+".txt";
+        //cout<<path<<endl;
+        read_picture(path, p1, {n, m});
         train0.push_back(p1);
         if ((++iterator) > N)
             break;
@@ -440,7 +444,10 @@ void generate_graph(int N,
     iterator = 0;
     for (const auto &entry : fs::directory_iterator(test_folder))
     {
-        read_picture(entry.path(), p2, {n, m});
+        //read_picture(entry.path(), p2, {n, m});
+        string path=test_folder+"/image_"+to_string(iterator)+".txt";
+        //cout<<path<<endl;
+        read_picture(path, p2, {n, m});
         test0.push_back(p2);
         if (++iterator > N)
             break;
@@ -448,8 +455,8 @@ void generate_graph(int N,
 
     // We suppose, that the data is shuffled (during the generation)
     //     If not: 
-    srand(0); std::random_shuffle ( train0.begin(), train0.end() );
-    srand(1); std::random_shuffle ( test0.begin(), test0.end() );
+    //srand(0); std::random_shuffle ( train0.begin(), train0.end() );
+    //srand(1); std::random_shuffle ( test0.begin(), test0.end() );
     // ===== Generate the Incidence matrix =====
     for (int i = 0; i < N; i++)
     {
