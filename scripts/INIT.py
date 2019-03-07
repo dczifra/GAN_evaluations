@@ -1,5 +1,5 @@
 
-sample_size=2000
+sample_size=10000
 # ===== Generate mnist train/test datasets =====
 from process_model import Models
 import os

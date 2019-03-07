@@ -79,11 +79,19 @@ class Models:
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
     def stretching_limits():
-        for N in range(200,601,200):
-            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data \
-            -folder2 models/wgan-gp/generator_1000/data -N {} -range 200 \
-            -out models/wgan-gp/generator_1000/compare.txt".format(N)
-        Models.measure_process(cmd,"Hun",N,"")
+        model_filename="models/wgan/generator_1000"
+        sample_size=10000
+        gen_model=Models.get_model(model_filename)
+        Models.generate_samples(gen_model,model_filename+"/data",sample_size)
+
+        for N in range(500,10001,500):
+            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt".format(N,N)
+            print(cmd)
+            Models.measure_process(cmd,"Hun",N,"")
+
+            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt -flow".format(N,N)
+            print(cmd)
+            Models.measure_process(cmd,"Flow",N,"")
     
     def process_modell(model_filename,sample_size=2000,generate=False):
         if(generate):
@@ -99,7 +107,7 @@ class Models:
             "-out"]
 
         print(" ".join(args+[model_filename+"/compare.txt"]))
-        Models.myTimer.write("{}:\n".format(model_filename))
+        Models.myTimer.write("====== {} ======\n".format(model_filename))
         Models.measure_process(" ".join(args+[model_filename+"/compare.txt"]),"Hun",N,r)
         Models.measure_process(" ".join(args+[model_filename+"/flow.txt","-flow"]),"Flow",N,r)
         Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",N,r)
@@ -130,15 +138,18 @@ class Models:
 
 
 if(__name__=="__main__"):
-    #Models.new_models()
+
+    #Models.myTimer=open("mytimer.txt","w")
+    #Models.run_all(sys.argv[1]=="True")
+    #Models.myTimer.close()
+
     Models.myTimer=open("limits.txt","w")
     Models.stretching_limits()
     Models.myTimer.close()
 
-    Models.myTimer=open("mytimer.txt","w")
-    Models.run_all(sys.argv[1])
-    Models.myTimer.close()
     exit()
+
+    #Models.new_models()
 
     gen=('True'==sys.argv[1])
     print(gen)

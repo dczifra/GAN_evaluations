@@ -114,8 +114,8 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
 
     
 
-    # ===== Print first 10 pair of matching ====
-    N=10
+    # ===== Print first N pair of matching ====
+    N=20
     pict1=[model_data1[match[i][0]] for i in range(N)]
     pict2=[model_data2[match[i][1]] for i in range(N)]
     score=[match[i][2] for i in range(N)]
@@ -124,10 +124,10 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     print(min(scores),max(scores))
 
     print_pictures(pict1,pict2,score)
-    # ===== Print 10 best picture =====
+    # ===== Print N best picture =====
     scores=[(int(match[i][2]),i) for i in range(len(match))]
     scores.sort()
-    scores=scores[:10]
+    scores=scores[:N]
     pict1=[model_data1[match[int(i)][0]] for _,i in scores]
     pict2=[model_data2[match[int(i)][1]] for _,i in scores]
     score=[match[int(i)][2] for _,i in scores]
@@ -177,12 +177,21 @@ def FID_for_MNIST():
             labels=labels)
 
 if(__name__=="__main__"):
+# Param1: N --> model epoch (Pl.: 1000, 5000, 10000)
+# Param3: batch size: number of samples from the dataset
+
+
     #FID_for_MNIST()
+    # TODO: Parameter descriptions!!!!
     if(len(sys.argv)>2):
+        #batch=250
+        batch=int(sys.argv[2])
         plot_matching_pairs("data/mnist/train/data","models/wgan/generator_1000/data",
-            "models/wgan/generator_1000/mnist_result1000_.txt")
+            "models/wgan/generator_1000/mnist_result_{}.txt".format(batch))
         plot_matching_pairs("data/mnist/train/data","models/wgan-gp/generator_1000/data",
-            "models/wgan-gp/generator_1000/mnist_result1000_.txt")
+            "models/wgan-gp/generator_1000/mnist_result_{}.txt".format(batch))
+        plot_matching_pairs("data/mnist/train/data","data/mnist/test/data",
+            "data/mnist/test/mnist_result_{}.txt".format(batch))
         N=int(sys.argv[1])
         exit()
     elif(len(sys.argv)>1):

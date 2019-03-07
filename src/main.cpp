@@ -176,10 +176,12 @@ int main(int argc, char *argv[])
         generate_graph(m->N,m->size, m->folder1, m->folder2);
 
         myfile.open(m->out);
-        myfile<<1<<" "<<40<<" "<<1<<endl; // [begin end range_by]
+        int by=1;
+        int until=40;
+        myfile<<by<<" "<<until<<" "<<by<<endl; // [begin end range_by]
 
         vector<double> flow;
-        for(int i=1;i<=40;i+=2){
+        for(int i=by;i<=until;i+=by){
             cout<<"\r"<<i;
             std::cout.flush();
             if(m->myMode==Menu::DEFICIT) myfile << deficit(i, m->N)<<" ";
