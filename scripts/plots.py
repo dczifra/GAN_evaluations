@@ -29,6 +29,7 @@ def different_model_compare( files,title,labels,
     ax1.set_ylabel(ylabel)
     plt.title(title)
     ax1.legend()
+    plt.savefig('temp_plot.png')
     plt.show()
 
 def read_model_data(model_path,mod2="image"):
