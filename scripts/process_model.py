@@ -86,7 +86,7 @@ class Models:
         gen_model=Models.get_model(model_filename)
         Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
-        for N in range(500,10001,500):
+        for N in range(500,10000,500):
             cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt".format(N,N)
             print(cmd)
             Models.measure_process(cmd,"Hun",N,"")
@@ -95,7 +95,7 @@ class Models:
             print(cmd)
             Models.measure_process(cmd,"Flow",N,"")
     
-    def process_modell(model_filename,sample_size=2000,generate=False):
+    def process_modell(model_filename,sample_size=10000,generate=False):
         if(generate):
             gen_model=Models.get_model(model_filename)
             Models.generate_samples(gen_model,model_filename+"/data",sample_size)
