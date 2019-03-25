@@ -9,6 +9,8 @@ import time
 class Models:
     nojson=False
     myTimer=None
+    N=2500
+    range=50
 
     def get_model(model_file):
         if(Models.nojson):
@@ -98,8 +100,8 @@ class Models:
             gen_model=Models.get_model(model_filename)
             Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
-        N=250
-        r=50
+        N=Models.N
+        r=Models.range
         args=["bin/main",
             "-size","28,28",
             "-folder1","data/mnist/train/data",\
@@ -123,10 +125,9 @@ class Models:
     def run_all(gen=False):
         Models.nojson=False
         Models.process_modell("data/mnist/test")
-        #for N in [1000,5000,10000]:
-        for N in [1000,5000,10000]:
-            Models.process_modell("models/wgan/generator_{}".format(N),generate=gen)
-            Models.process_modell("models/wgan-gp/generator_{}".format(N),generate=gen)
+        for model in [1000,5000,10000]:
+            Models.process_modell("models/wgan/generator_{}".format(model),generate=gen)
+            Models.process_modell("models/wgan-gp/generator_{}".format(model),generate=gen)
             exit()
 
     def new_models():
@@ -138,10 +139,11 @@ class Models:
 
 
 if(__name__=="__main__"):
-
-    #Models.myTimer=open("mytimer.txt","w")
-    #Models.run_all(sys.argv[1]=="True")
-    #Models.myTimer.close()
+    Models.N=sys.argv[2]
+    Models.range=sys.argv[3]
+    Models.myTimer=open("mytimer.txt","w")
+    Models.run_all(sys.argv[1]=="True")
+    Models.myTimer.close()
 
     Models.myTimer=open("limits.txt","w")
     Models.stretching_limits()
@@ -153,7 +155,7 @@ if(__name__=="__main__"):
 
     gen=('True'==sys.argv[1])
     print(gen)
-    process_modell("data/mnist/test")
+    Models.process_modell("data/mnist/test")
     
     
 
