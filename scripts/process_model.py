@@ -79,7 +79,7 @@ class Models:
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
     def stretching_limits():
-        model_filename="models/wgan/generator_1000"
+        model_filename="models/wgan-gp/generator_1000"
         sample_size=10000
         gen_model=Models.get_model(model_filename)
         Models.generate_samples(gen_model,model_filename+"/data",sample_size)
