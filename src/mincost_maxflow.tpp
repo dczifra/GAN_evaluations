@@ -45,7 +45,7 @@
 
 using namespace std;
 // the maximum number of vertices + 1
-#define NN 20005
+#define NN 10005
 
 // adjacency matrix (fill this up)
 int cap[NN][NN];
