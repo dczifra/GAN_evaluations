@@ -11,6 +11,7 @@ class Models:
     myTimer=None
     N=2500
     range=50
+    log=False
 
     def get_model(model_file):
         if(Models.nojson):
@@ -57,7 +58,7 @@ class Models:
             
             iter+=1
             if(iter >N): break;
-            #else: print("\r{}".format(iter),end=" ")
+            elif(Models.log): print("\r{}".format(iter),end=" ")
             myfile.close()
 
     def generate_from_npy(N,input,output_file):
@@ -78,7 +79,7 @@ class Models:
                 myfile.write("\n")
             iter+=1
             if(iter >N): break;
-            #else: print("\r{}".format(iter),end=" ")
+            elif(Models.log): print("\r{}".format(iter),end=" ")
             myfile.close()
 
     def generate_mnist(N,test=False,):
@@ -106,14 +107,15 @@ class Models:
         gen_model=Models.get_model("data/mnist_wgan/generator_1000")
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
-    def stretching_limits(n,r,model_filename):
+    def stretching_limits(n,r,model_filename,gen=True):
         #model_filename="models/wgan-gp/generator_1000"
         sample_size=n
-        gen_model=Models.get_model(model_filename)
-        Models.generate_samples(gen_model,model_filename+"/data",sample_size)
+        if(gen):
+            gen_model=Models.get_model(model_filename)
+            Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
         #for N in range(r,n+r,r):
-        cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 {}/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt".format(model_filename,n,r)
+        cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 {}/data -N {} -range {} -out {}/compare_limit.txt".format(model_filename,n,r,model_filename)
         print(cmd)
         Models.measure_process(cmd,"Hun",n,"")
 
@@ -170,11 +172,13 @@ if(__name__=="__main__"):
     Models.myTimer=open("mytimer.txt","w")
 
     if(sys.argv[1]=="limits"):
-        Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_1000")
-        Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_1000")
+        Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
+        Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
+        Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_10000")
     elif(sys.argv[1]=="celeba"):
-        Models.generate_from_npy(10,"/home/doma/model_celeba10000.npy","models/celeba/train/data")
-        Models.generate_from_npy(10,"/home/doma/model_celeba10000.npy","models/celeba/test/data")
+        Models.log=True
+        Models.generate_from_npy(2000,"/home/doma/model_celeba10000.npy","models/celeba/train/data")
+        Models.generate_from_npy(2000,"/home/doma/model_celeba10000.npy","models/celeba/test/data")
     Models.myTimer.close()
     exit()
 
