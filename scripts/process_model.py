@@ -57,7 +57,7 @@ class Models:
             
             iter+=1
             if(iter >N): break;
-            else: print("\r{}".format(iter),end=" ")
+            #else: print("\r{}".format(iter),end=" ")
             myfile.close()
 
     def generate_from_npy(N,input,output_file):
@@ -78,7 +78,7 @@ class Models:
                 myfile.write("\n")
             iter+=1
             if(iter >N): break;
-            else: print("\r{}".format(iter),end=" ")
+            #else: print("\r{}".format(iter),end=" ")
             myfile.close()
 
     def generate_mnist(N,test=False,):
