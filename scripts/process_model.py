@@ -28,8 +28,11 @@ class Models:
         print("Loaded model ({}) from disk".format(model_file))
         return loaded_model
 
-    def transform_num(elem):
-        return str(int(128.0*(1.0+elem[0])))
+    def transform_num(elem,npy=False):
+        if(npy):
+            return str(int(128.0*(1.0+elem)))
+        else:
+            return str(int(128.0*(1.0+elem[0])))
 
     def generate_samples(model,output_file,N=1000):
         # ===== Generate samples: =====
@@ -53,6 +56,29 @@ class Models:
                 myfile.write("\n")
             
             iter+=1
+            if(iter >N): break;
+            else: print("\r{}".format(iter),end=" ")
+            myfile.close()
+
+    def generate_from_npy(N,input,output_file):
+        print("Loading {} ...".format(input))
+        data=np.load(input)
+        print("Loaded")
+        # ===== Write out to file =====
+        if(not os.path.isdir(output_file)):
+            os.makedirs(output_file)
+
+        iter=0
+        for img in data:
+            myfile=open(output_file+"/image_"+str(iter)+".txt","w")
+            for row in img:
+                for elem in row:
+                    for color in elem:
+                        myfile.write(Models.transform_num(color,True)+" ")
+                myfile.write("\n")
+            iter+=1
+            if(iter >N): break;
+            else: print("\r{}".format(iter),end=" ")
             myfile.close()
 
     def generate_mnist(N,test=False,):
@@ -80,20 +106,20 @@ class Models:
         gen_model=Models.get_model("data/mnist_wgan/generator_1000")
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
-    def stretching_limits():
-        model_filename="models/wgan-gp/generator_1000"
-        sample_size=10000
+    def stretching_limits(n,r,model_filename):
+        #model_filename="models/wgan-gp/generator_1000"
+        sample_size=n
         gen_model=Models.get_model(model_filename)
         Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
-        for N in range(500,10000,500):
-            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt".format(N,N)
-            print(cmd)
-            Models.measure_process(cmd,"Hun",N,"")
+        #for N in range(r,n+r,r):
+        cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 {}/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt".format(model_filename,n,r)
+        print(cmd)
+        Models.measure_process(cmd,"Hun",n,"")
 
-            cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt -flow".format(N,N)
-            print(cmd)
-            Models.measure_process(cmd,"Flow",N,"")
+            #cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt -flow".format(N,N)
+            #print(cmd)
+            #Models.measure_process(cmd,"Flow",N,"")
     
     def process_modell(model_filename,sample_size=10000,generate=False):
         if(generate):
@@ -139,11 +165,22 @@ class Models:
 
 
 if(__name__=="__main__"):
-    Models.N=sys.argv[2]
-    Models.range=sys.argv[3]
+    Models.N=int(sys.argv[2])
+    Models.range=int(sys.argv[3])
     Models.myTimer=open("mytimer.txt","w")
-    Models.run_all(sys.argv[1]=="True")
+
+    if(sys.argv[1]=="limits"):
+        Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_1000")
+        Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_1000")
+    elif(sys.argv[1]=="celeba"):
+        Models.generate_from_npy(10,"/home/doma/model_celeba10000.npy","models/celeba/train/data")
+        Models.generate_from_npy(10,"/home/doma/model_celeba10000.npy","models/celeba/test/data")
     Models.myTimer.close()
+    exit()
+
+    
+    Models.run_all(sys.argv[1]=="True")
+    
 
     Models.myTimer=open("limits.txt","w")
     Models.stretching_limits()

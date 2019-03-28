@@ -133,12 +133,33 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     pict2=[model_data2[match[int(i)][1]] for _,i in scores]
     score=[match[int(i)][2] for _,i in scores]
     print_pictures(pict1,pict2,score)
-
-
-
     #print(model_data1[0])
 
+def print_color_pictures(pict1, pict2, score):
+    N=len(score)
+    plt.figure(figsize=(N,2))
+    for i in range(N):
+        #vect=np.array(pict1[i])-np.array(pict2[i])
+        #vect=np.reshape(vect,(28*28))
+        #print(i,np.linalg.norm(vect,2))
+        ax=plt.subplot(2,N,i+1)
+        plt.imshow(pict1[i])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        ax.set_title(score[i])
+        
+        ax=plt.subplot(2,N,N+i+1)
+        plt.imshow(pict2[i])
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+    plt.show()
 
+def plot_color(model_path1,model_path2):
+    model_data1=read_model_data(model_path1)
+    model_data2=read_model_data(model_path2)
+
+    pict1=[model_data1[match[i][0]] for i in range(N)]
+    pict2=[model_data2[match[i][1]] for i in range(N)]
 
 def wgan_wgan_gp_type(N,type,second=False):
     title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
