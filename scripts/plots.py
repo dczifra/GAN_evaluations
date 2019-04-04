@@ -199,9 +199,12 @@ if(__name__=="__main__"):
 # Param1: N --> model epoch (Pl.: 1000, 5000, 10000)
 # Param3: batch size: number of samples from the dataset
     if(sys.argv[1]=="matching"):
-        different_model_compare(files=["models/celeba/test/compare.txt"],
+        different_model_compare(files=["models/celeba/gen_9999/compare.txt",
+        "models/celeba/gen_49999/compare.txt",
+        "models/celeba/gen_99999/compare.txt",
+        "models/celeba/gen_149999/compare.txt"],
                 title="matching celeba",
-                labels=["celeba epoch 1000"],second=False)
+                labels=["celeba 9999","49999","99999","149999"],second=False)
         
     elif(sys.argv[1]=="pict"):
         model1="models/celeba/train/"#"data/mnist/train/"
