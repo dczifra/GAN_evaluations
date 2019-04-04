@@ -151,9 +151,9 @@ class Models:
         Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
         #fid_score("data/mnist/train",model_filename)
 
-    def process_celeba(model_filename,generate=False):
-        if(generate):
-            Models.generate_from_npy("/home/doma/model_celeba10000.npy",model_filename+"/data")
+    def process_celeba(model_filename,generate=None):
+        if(generate!=None):
+            Models.generate_from_npy(generate,model_filename+"/data")
         N=Models.N
         r=Models.range
         args=["bin/main",
@@ -191,14 +191,20 @@ if(__name__=="__main__"):
     Models.range=int(sys.argv[3])
     Models.myTimer=open("mytimer.txt","w")
 
+    if(sys.argv[1]=="init"):
+        #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
+        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data")
     if(sys.argv[1]=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
         Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
         Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_10000")
     elif(sys.argv[1]=="celeba"):
-        Models.log=True
-        #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
-        Models.process_celeba("models/celeba/test")
+        #Models.log=True
+        #Models.process_celeba("models/celeba/test","/home/doma/model_celeba10000.npy")
+        Models.process_celeba("models/celeba/gen_9999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_9999.npy")
+        Models.process_celeba("models/celeba/gen_49999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_49999.npy")        
+        Models.process_celeba("models/celeba/gen_99999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_99999.npy")
+        Models.process_celeba("models/celeba/gen_149999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_149999.npy")
     Models.myTimer.close()
     exit()
 
