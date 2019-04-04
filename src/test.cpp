@@ -51,7 +51,9 @@ void test2(){
     std::cout<<"===== END ====="<<endl;
 }
 int main(){
-    fstream myfile("~/valami.txt");
+    ofstream myfile("./valami.txt");
     myfile<<"100\n"<<"Szoveg\n";
+    cout<<"100\n"<<"Szoveg\n";
+    myfile.close();
     return 0;
 }

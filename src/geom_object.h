@@ -422,7 +422,7 @@ void generate_graph(int N,
 
     // TODO: for small dataset save into memory instead of hard disc
     // ===== Create temporary output file =====
-    std::string filename = "~/mnist_mtx.txt";
+    std::string filename = "./mnist_mtx.txt";
     ofstream myfile(filename.c_str());
     myfile << N << " " << N << endl;
 
