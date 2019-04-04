@@ -46,7 +46,7 @@ struct Menu
 
     string folder1 = "data/mnist/train";
     string folder2 = "data/mnist/test";
-    pair<int, int> size = {28, 228};
+    pair<int, int> size = {28, 28};
     int N = 10;
     int range = -1;
     string out = "NO_OUTFILE_IS_GIVEN";

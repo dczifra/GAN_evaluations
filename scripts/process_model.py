@@ -61,7 +61,8 @@ class Models:
             elif(Models.log): print("\r{}".format(iter),end=" ")
             myfile.close()
 
-    def generate_from_npy(N,input,output_file):
+    def generate_from_npy(input,output_file):
+        N=Models.N
         print("Loading {} ...".format(input))
         data=np.load(input)
         print("Loaded")
@@ -69,13 +70,19 @@ class Models:
         if(not os.path.isdir(output_file)):
             os.makedirs(output_file)
 
+        size=np.shape(data)
+        print(size)
+        data=np.resize(data,(size[0],size[1],size[2]*size[3]))
+        noTransform=(np.max(data[0])>2)
         iter=0
         for img in data:
             myfile=open(output_file+"/image_"+str(iter)+".txt","w")
             for row in img:
                 for elem in row:
-                    for color in elem:
-                        myfile.write(Models.transform_num(color,True)+" ")
+                    if(noTransform):
+                        myfile.write(str(elem)+" ")
+                    else:
+                        myfile.write(Models.transform_num(elem,True)+" ")
                 myfile.write("\n")
             iter+=1
             if(iter >N): break;
@@ -144,6 +151,19 @@ class Models:
         Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
         #fid_score("data/mnist/train",model_filename)
 
+    def process_celeba(model_filename,generate=False):
+        if(generate):
+            Models.generate_from_npy("/home/doma/model_celeba10000.npy",model_filename+"/data")
+        N=Models.N
+        r=Models.range
+        args=["bin/main",
+            "-size","64,192",
+            "-folder1","models/celeba/train/data",\
+            "-folder2",model_filename+"/data","-N {}".format(N),"-range {}".format(r),\
+            "-out"]
+
+        print(" ".join(args+[model_filename+"/compare.txt"]))
+        os.system(" ".join(args+[model_filename+"/compare.txt"]))
     def measure_process(command, type_,N,r):
         start=time.time()
         os.system(command)
@@ -177,8 +197,8 @@ if(__name__=="__main__"):
         Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_10000")
     elif(sys.argv[1]=="celeba"):
         Models.log=True
-        Models.generate_from_npy(2000,"/home/doma/model_celeba10000.npy","models/celeba/train/data")
-        Models.generate_from_npy(2000,"/home/doma/model_celeba10000.npy","models/celeba/test/data")
+        #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
+        Models.process_celeba("models/celeba/test")
     Models.myTimer.close()
     exit()
 
@@ -191,12 +211,6 @@ if(__name__=="__main__"):
     Models.myTimer.close()
 
     exit()
-
-    #Models.new_models()
-
-    gen=('True'==sys.argv[1])
-    print(gen)
-    Models.process_modell("data/mnist/test")
     
     
 

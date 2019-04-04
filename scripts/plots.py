@@ -16,6 +16,7 @@ def different_model_compare( files,title,labels,
         test=open(file)
         a,b,delta=np.array(test.readline().split(" ")).astype(np.int)
         data=np.array(test.readline().split(" "))[:-1].astype(np.float)
+        print(data)
         if(second):
             data2=np.array(test.readline().split(" "))[:-1].astype(np.float)
             #print(data2)
@@ -56,7 +57,7 @@ def read_mathcing(mathing_file):
 
 
 def trash(model_data1,model_data2):
-    print(np.shape(model_data1), np.shape(model_data2),np.shape(match))
+    #print(np.shape(model_data1), np.shape(model_data2),np.shape(match))
 
     for row in model_data2[0]:
         for e in row:
@@ -90,10 +91,12 @@ def trash(model_data1,model_data2):
 
 def print_pictures(pict1, pict2, score):
     N=len(score)
+    size=np.shape
     plt.figure(figsize=(N,2))
     for i in range(N):
         vect=np.array(pict1[i])-np.array(pict2[i])
-        vect=np.reshape(vect,(28*28))
+        vect=np.reshape(vect,(64*64*3))
+        #vect=np.reshape(vect,(28*28))
         print(i,np.linalg.norm(vect,2))
         ax=plt.subplot(2,N,i+1)
         plt.imshow(pict1[i])
@@ -111,9 +114,13 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     model_data1=read_model_data(model_path1)
     model_data2=read_model_data(model_path2)
 
-    match=read_mathcing(matching_file)
+    size=np.shape(model_data1)
+    if(size[-1]!=size[-2]):
+        print(size)
+        model_data1=np.resize(model_data1,(size[0],size[1],size[2]//3,3)).astype(int)
+        model_data2=np.resize(model_data2,(size[0],size[1],size[2]//3,3)).astype(int)
 
-    
+    match=read_mathcing(matching_file)
 
     # ===== Print first N pair of matching ====
     N=20
@@ -135,31 +142,6 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     print_pictures(pict1,pict2,score)
     #print(model_data1[0])
 
-def print_color_pictures(pict1, pict2, score):
-    N=len(score)
-    plt.figure(figsize=(N,2))
-    for i in range(N):
-        #vect=np.array(pict1[i])-np.array(pict2[i])
-        #vect=np.reshape(vect,(28*28))
-        #print(i,np.linalg.norm(vect,2))
-        ax=plt.subplot(2,N,i+1)
-        plt.imshow(pict1[i])
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        ax.set_title(score[i])
-        
-        ax=plt.subplot(2,N,N+i+1)
-        plt.imshow(pict2[i])
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-    plt.show()
-
-def plot_color(model_path1,model_path2):
-    model_data1=read_model_data(model_path1)
-    model_data2=read_model_data(model_path2)
-
-    pict1=[model_data1[match[i][0]] for i in range(N)]
-    pict2=[model_data2[match[i][1]] for i in range(N)]
 
 def wgan_wgan_gp_type(N,type,second=False):
     title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
@@ -197,10 +179,44 @@ def FID_for_MNIST():
             "eval/mnist_train_wgan-gp.fid"],
             title=title,
             labels=labels)
+def celeba_example():
+    # ===== Origin =====
+    file="/home/doma/model_celeba10000.npy"
+    data=np.load(file)
+    plt.imshow(data[0])
+    plt.show()
+
+    # ===== Reconstruct =====
+    model_data1=read_model_data("models/celeba/train/data")
+    model_data2=[]
+    for img in model_data1:
+        model_data2.append(np.resize(img,(64,64,3)))
+    model_data2=np.array(model_data2).astype(int)
+    plt.imshow(model_data2[0].astype(int))
+    plt.show()
 
 if(__name__=="__main__"):
 # Param1: N --> model epoch (Pl.: 1000, 5000, 10000)
 # Param3: batch size: number of samples from the dataset
+    if(sys.argv[1]=="matching"):
+        different_model_compare(files=["models/celeba/test/compare.txt"],
+                title="matching celeba",
+                labels=["celeba epoch 1000"],second=False)
+        
+    elif(sys.argv[1]=="pict"):
+        model1="models/celeba/train/"#"data/mnist/train/"
+        model2="models/celeba/test/"#"models/wgan/generator_1000"
+        plot_matching_pairs(model1+"data",model2+"/data",
+            model2+"/mnist_result_{}.txt".format(1000))
+    else:
+        different_model_compare(files=["models/wgan-gp/compare_10000.txt",
+        "models/wgan/generator_1000/compare.txt",
+        "models/wgan-gp/generator_10000/compare_limit.txt",
+        "models/wgan/generator_10000/compare_limit.txt",
+        "data/mnist/test/compare_limit.txt"],
+                title="matching mnist until 10 000",
+                labels=["wgan-gp 1000","wgan 1000","wgan-gp 10 000","wgan 10 000", "test"],second=False)
+    exit()
 
 
     #FID_for_MNIST()

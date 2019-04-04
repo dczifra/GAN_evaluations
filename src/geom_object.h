@@ -356,8 +356,9 @@ void read_picture(std::string filename, vector<vector<double>> &pict, pair<int, 
 
 double euclidian_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
 {
-    int n = 28;
-    int m = 28;
+    int n = p1.size();
+    assert(p1.size()!=0);
+    int m = p1[0].size();
     double sum = 0;
     for (int i = 0; i < n; i++)
     {
@@ -371,16 +372,17 @@ double euclidian_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
 
 double wasserstein_dist(vector<vector<double>> &p1, vector<vector<double>> &p2)
 {
-    pair<int, int> size(28, 28);
+    assert(p1.size()!=0);
+    pair<int, int> size(p1.size(), p1[0].size());
 
     Picture picture1(size);
     Picture picture2(size);
 
     vector<int> v1, v2;
 
-    for (int i = 0; i < 28; i++)
+    for (int i = 0; i < size.first; i++)
     {
-        for (int j = 0; j < 28; j++)
+        for (int j = 0; j < size.second; j++)
         {
             Koord k = Koord(p1[i][j], -1);
             k.index = i * size.first + j;
