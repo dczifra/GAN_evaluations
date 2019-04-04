@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+
 #include "hungarian.h"
 #include "problems.h"
 #include "mincost_maxflow.tpp"
@@ -21,7 +23,7 @@ void test1(){
     auto p=method.Gamma();
     cout<<p.first<<" "<<p.second<<" "<<((double) p.first/p.second)*100.0<<endl;
 }
-int main(){
+void test2(){
     pair<int,int> pair0={28,28};
     string folder1="data/mnist/train/data";
     string folder2="models/wgan/generator_1000/data";
@@ -47,5 +49,9 @@ int main(){
     auto p=f.minCost_maxMatching_flow(mtx);
     cout<<p.first<<" "<<p.second<<endl;
     std::cout<<"===== END ====="<<endl;
+}
+int main(){
+    fstream myfile("~/valami.txt");
+    myfile<<"100\n"<<"Szoveg\n";
     return 0;
 }
