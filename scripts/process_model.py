@@ -201,10 +201,10 @@ if(__name__=="__main__"):
     elif(sys.argv[1]=="celeba"):
         #Models.log=True
         #Models.process_celeba("models/celeba/test","/home/doma/model_celeba10000.npy")
-        Models.process_celeba("models/celeba/gen_9999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_9999.npy")
-        Models.process_celeba("models/celeba/gen_49999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_49999.npy")        
-        Models.process_celeba("models/celeba/gen_99999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_99999.npy")
-        Models.process_celeba("models/celeba/gen_149999","/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_149999.npy")
+        Models.process_celeba("models/celeba/gen_9999","/home/zombori/wgan_gp_orig/generated/celeba_9999.npy")
+        Models.process_celeba("models/celeba/gen_49999","/zombori/wgan_gp_orig/generated/celeba_49999.npy")        
+        Models.process_celeba("models/celeba/gen_99999","/home/zombori/wgan_gp_orig/generated/celeba_99999.npy")
+        Models.process_celeba("models/celeba/gen_149999","/home/zombori/wgan_gp_orig/generated/celeba_149999.npy")
     Models.myTimer.close()
     exit()
 
