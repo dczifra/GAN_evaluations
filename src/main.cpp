@@ -116,13 +116,13 @@ double match_mnist(int N,string folder2)
     Hungarian_method method = Hungarian_method();
     //std::cout << "The matching between the pictures:\n";
     string match_outfile=folder2+"/../mnist_result_"+to_string(N)+".txt";
-    double result = method.run("/tmp/mnist_mtx.txt", match_outfile,N);
+    double result = method.run("~/mnist_mtx.txt", match_outfile,N);
     return result/N;
 }
 
 double deficit(int i, int N){
     Hungarian_method method = Hungarian_method();
-    method.read_mtx("/tmp/mnist_mtx.txt",N);
+    method.read_mtx("~/mnist_mtx.txt",N);
     method.init();
 
     method.sparse_all(i);
@@ -132,7 +132,7 @@ double deficit(int i, int N){
 
 pair<double,double> deficitFlow(int i,int N){
     Hungarian_method method = Hungarian_method();
-    method.read_mtx("/tmp/mnist_mtx.txt",N);
+    method.read_mtx("~/mnist_mtx.txt",N);
     method.init();
 
     method.sparse_all(i);
@@ -144,7 +144,7 @@ pair<double,double> deficitFlow(int i,int N){
 
 double flowMatching(int N){
     vector<vector<double> > mtx;
-    beolv<double>(mtx,"/tmp/mnist_mtx.txt",N);
+    beolv<double>(mtx,"~/mnist_mtx.txt",N);
     Flow<double> f;
     return ((double) f.minCost_maxMatching_flow(mtx).first)/N;
 }
