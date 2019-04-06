@@ -205,7 +205,7 @@ if(__name__=="__main__"):
         "models/celeba/gen_149999/compare.txt",
         "models/celeba/dani/compare.txt"],
                 title="matching celeba",
-                labels=["celeba 9999","49999","99999","149999"],second=False)
+                labels=["celeba 9999","49999","99999","149999","dani"],second=False)
         
     elif(sys.argv[1]=="pict"):
         model1="models/celeba/train/"#"data/mnist/train/"
