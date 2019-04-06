@@ -89,7 +89,7 @@ def trash(model_data1,model_data2):
     print(sum0,np.sqrt(sum0))
 
 
-def print_pictures(pict1, pict2, score):
+def print_pictures(pict1, pict2, score,ind=1):
     N=len(score)
     size=np.shape
     plt.figure(figsize=(N,2))
@@ -108,6 +108,7 @@ def print_pictures(pict1, pict2, score):
         plt.imshow(pict2[i])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
+    plt.savefig('temp_plot{}.png'.format(ind))
     plt.show()
 
 def plot_matching_pairs(model_path1, model_path2, matching_file):
@@ -131,7 +132,7 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     scores=[int(match[i][2]) for i in range(len(match))]
     print(min(scores),max(scores))
 
-    print_pictures(pict1,pict2,score)
+    print_pictures(pict1,pict2,score,1)
     # ===== Print N best picture =====
     scores=[(int(match[i][2]),i) for i in range(len(match))]
     scores.sort()
@@ -139,7 +140,7 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     pict1=[model_data1[match[int(i)][0]] for _,i in scores]
     pict2=[model_data2[match[int(i)][1]] for _,i in scores]
     score=[match[int(i)][2] for _,i in scores]
-    print_pictures(pict1,pict2,score)
+    print_pictures(pict1,pict2,score,2)
     #print(model_data1[0])
 
 
@@ -209,7 +210,7 @@ if(__name__=="__main__"):
         
     elif(sys.argv[1]=="pict"):
         model1="models/celeba/train/"#"data/mnist/train/"
-        model2="models/celeba/test/"#"models/wgan/generator_1000"
+        model2="models/celeba/dani/"#"models/wgan/generator_1000"
         plot_matching_pairs(model1+"data",model2+"/data",
             model2+"/mnist_result_{}.txt".format(1000))
     else:

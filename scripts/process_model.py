@@ -193,6 +193,7 @@ if(__name__=="__main__"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train",0)
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test",1)
+        print("=== End of init ===")
     if(sys.argv[1]=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
         Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
