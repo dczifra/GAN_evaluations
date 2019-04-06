@@ -1,10 +1,12 @@
-from keras.models import load_model
-from keras.models import model_from_json
-from eval.try_eval import fid_score
 import numpy as np
 import os
 import sys
 import time
+
+from keras.models import load_model
+from keras.models import model_from_json
+from eval.try_eval import fid_score
+
 
 class Models:
     nojson=False
@@ -61,33 +63,35 @@ class Models:
             elif(Models.log): print("\r{}".format(iter),end=" ")
             myfile.close()
 
-    def generate_from_npy(input,output_file):
+    def generate_from_npy(input, output_file, parity=None):
         N=Models.N
         print("Loading {} ...".format(input))
         data=np.load(input)
-        print("Loaded")
+        size=np.shape(data)
+        data=np.resize(data,(size[0],size[1],size[2]*size[3]))
+        print(size)
         # ===== Write out to file =====
         if(not os.path.isdir(output_file)):
             os.makedirs(output_file)
 
-        size=np.shape(data)
-        print(size)
-        data=np.resize(data,(size[0],size[1],size[2]*size[3]))
         noTransform=(np.max(data[0])>2)
         iter=0
         for img in data:
-            myfile=open(output_file+"/image_"+str(iter)+".txt","w")
-            for row in img:
-                for elem in row:
-                    if(noTransform):
-                        myfile.write(str(elem)+" ")
-                    else:
-                        myfile.write(Models.transform_num(elem,True)+" ")
-                myfile.write("\n")
-            iter+=1
-            if(iter >N): break;
+            # ===== Train and test =====
+            if(parity == None or iter%2==parity):
+                myfile=open(output_file+"/image_"+str(iter)+".txt","w")
+                for row in img:
+                    for elem in row:
+                        if(noTransform):
+                            myfile.write(str(elem)+" ")
+                        else:
+                            myfile.write(Models.transform_num(elem,True)+" ")
+                    myfile.write("\n")
+                myfile.close()
+                iter+=1
+            if(iter > N): break;
             elif(Models.log): print("\r{}".format(iter),end=" ")
-            myfile.close()
+            
 
     def generate_mnist(N,test=False,):
         # ===== Get MNIST =====
@@ -115,28 +119,22 @@ class Models:
         Models.generate_samples(gen_model,"data/mnist/wgan")
 
     def stretching_limits(n,r,model_filename,gen=True):
-        #model_filename="models/wgan-gp/generator_1000"
         sample_size=n
         if(gen):
             gen_model=Models.get_model(model_filename)
             Models.generate_samples(gen_model,model_filename+"/data",sample_size)
 
-        #for N in range(r,n+r,r):
         cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 {}/data -N {} -range {} -out {}/compare_limit.txt".format(model_filename,n,r,model_filename)
         print(cmd)
         Models.measure_process(cmd,"Hun",n,"")
-
-            #cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 models/wgan-gp/generator_1000/data -N {} -range {} -out models/wgan-gp/generator_1000/compare_limit.txt -flow".format(N,N)
-            #print(cmd)
-            #Models.measure_process(cmd,"Flow",N,"")
     
-    def process_modell(model_filename,sample_size=10000,generate=False):
-        if(generate):
-            gen_model=Models.get_model(model_filename)
-            Models.generate_samples(gen_model,model_filename+"/data",sample_size)
-
+    def process_modell(model_filename,generate=False):
         N=Models.N
         r=Models.range
+        if(generate):
+            gen_model=Models.get_model(model_filename)
+            Models.generate_samples(gen_model,model_filename+"/data",N)
+
         args=["bin/main",
             "-size","28,28",
             "-folder1","data/mnist/train/data",\
@@ -193,7 +191,8 @@ if(__name__=="__main__"):
 
     if(sys.argv[1]=="init"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
-        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data")
+        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train",0)
+        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test",1)
     if(sys.argv[1]=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
         Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
@@ -201,22 +200,13 @@ if(__name__=="__main__"):
     elif(sys.argv[1]=="celeba"):
         #Models.log=True
         #Models.process_celeba("models/celeba/test","/home/doma/model_celeba10000.npy")
-        Models.process_celeba("models/celeba/gen_9999","/home/zombori/wgan_gp_orig/generated/celeba_9999.npy")
-        Models.process_celeba("models/celeba/gen_49999","/home/zombori/wgan_gp_orig/generated/celeba_49999.npy")        
-        Models.process_celeba("models/celeba/gen_99999","/home/zombori/wgan_gp_orig/generated/celeba_99999.npy")
-        Models.process_celeba("models/celeba/gen_149999","/home/zombori/wgan_gp_orig/generated/celeba_149999.npy")
+        Models.process_celeba("models/celeba/dani","/mnt/g2home/daniel/experiments/vae/inverting-is-hard/stylegan-fork/saved/generated.npy")
+        Models.process_celeba("models/celeba/test",generate=False)
+        for epoch in range(9999,190000,10000):
+            Models.process_celeba("models/celeba/gen_{}".format(epoch),
+            "/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_{}.npy".format(epoch))
+    
     Models.myTimer.close()
     exit()
 
-    
     Models.run_all(sys.argv[1]=="True")
-    
-
-    Models.myTimer=open("limits.txt","w")
-    Models.stretching_limits()
-    Models.myTimer.close()
-
-    exit()
-    
-    
-

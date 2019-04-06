@@ -202,7 +202,8 @@ if(__name__=="__main__"):
         different_model_compare(files=["models/celeba/gen_9999/compare.txt",
         "models/celeba/gen_49999/compare.txt",
         "models/celeba/gen_99999/compare.txt",
-        "models/celeba/gen_149999/compare.txt"],
+        "models/celeba/gen_149999/compare.txt",
+        "models/celeba/dani/compare.txt"],
                 title="matching celeba",
                 labels=["celeba 9999","49999","99999","149999"],second=False)
         
