@@ -76,9 +76,11 @@ class Models:
 
         noTransform=(np.max(data[0])>2)
         iter=0
+        iter2=0
         for img in data:
             # ===== Train and test =====
             if(parity == None or iter%2==parity):
+                #print(iter)
                 myfile=open(output_file+"/image_"+str(iter)+".txt","w")
                 for row in img:
                     for elem in row:
@@ -88,8 +90,9 @@ class Models:
                             myfile.write(Models.transform_num(elem,True)+" ")
                     myfile.write("\n")
                 myfile.close()
-                iter+=1
-            if(iter > N): break;
+                iter2+=1
+            iter+=1
+            if(iter2 > N): break;
             elif(Models.log): print("\r{}".format(iter),end=" ")
             
 
@@ -191,8 +194,8 @@ if(__name__=="__main__"):
 
     if(sys.argv[1]=="init"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
-        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train",0)
-        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test",1)
+        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data",0)
+        Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test/data",1)
         print("=== End of init ===")
     if(sys.argv[1]=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
