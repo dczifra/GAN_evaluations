@@ -55,40 +55,6 @@ def read_mathcing(mathing_file):
     
     return match
 
-
-def trash(model_data1,model_data2):
-    #print(np.shape(model_data1), np.shape(model_data2),np.shape(match))
-
-    for row in model_data2[0]:
-        for e in row:
-            print("{} ".format(e),end='')
-        print('')
-    
-    for i in range(10):
-        for j in range(10):
-            vect=np.array(model_data1[i])-np.array(model_data2[j])
-            vect=np.reshape(vect,(28*28))
-            l2=np.linalg.norm(vect,2)
-
-            print("{} ".format(int(l2)),end='')
-        print("")
-
-    for i in range(10):
-        for j in range(10):
-            vect=np.array(model_data1[i])-np.array(model_data2[j])
-            vect=np.reshape(vect,(28*28))
-            l2=np.linalg.norm(vect,2)
-
-            print("{} ".format(int(l2)),end='')
-        print("")
-
-    sum0=0
-    for i in range(28):
-        for j in range(28):
-            sum0+=(model_data1[0][i][j]-model_data2[0][i][j])**2 
-    print(sum0,np.sqrt(sum0))
-
-
 def print_pictures(pict1, pict2, score,ind=1):
     N=len(score)
     size=np.shape
@@ -201,12 +167,11 @@ if(__name__=="__main__"):
 # Param3: batch size: number of samples from the dataset
     if(sys.argv[1]=="matching"):
         different_model_compare(files=["models/celeba/gen_9999/compare.txt",
-        "models/celeba/test/compare.txt",
         "models/celeba/gen_99999/compare.txt",
         "models/celeba/gen_149999/compare.txt",
         "models/celeba/dani/compare.txt","models/celeba/test/compare.txt"],
                 title="matching celeba",
-                labels=["celeba 9999","test","99999","149999","Dani","test"],second=False)
+                labels=["celeba 9999","99999","149999","Dani","test"],second=False)
         
     elif(sys.argv[1]=="pict"):
         model1="models/celeba/train/"#"data/mnist/train/"

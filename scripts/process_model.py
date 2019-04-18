@@ -145,11 +145,10 @@ class Models:
             "-out"]
 
         print(" ".join(args+[model_filename+"/compare.txt"]))
-        Models.myTimer.write("====== {} ======\n".format(model_filename))
         Models.measure_process(" ".join(args+[model_filename+"/compare.txt"]),"Hun",N,r)
-        Models.measure_process(" ".join(args+[model_filename+"/flow.txt","-flow"]),"Flow",N,r)
-        Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",N,r)
-        Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
+        #Models.measure_process(" ".join(args+[model_filename+"/flow.txt","-flow"]),"Flow",N,r)
+        #Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",N,r)
+        #Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
         #fid_score("data/mnist/train",model_filename)
 
     def process_celeba(model_filename,generate=None):
@@ -192,6 +191,8 @@ if(__name__=="__main__"):
     Models.range=int(sys.argv[3])
     Models.myTimer=open("mytimer.txt","w")
 
+    if(sys.argv[1]=="one"):
+        Models.process_celeba("models/celeba/test",generate=None)
     if(sys.argv[1]=="init"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data",0)
@@ -206,7 +207,7 @@ if(__name__=="__main__"):
         #Models.log=True
         #Models.process_celeba("models/celeba/test","/home/doma/model_celeba10000.npy")
         Models.process_celeba("models/celeba/dani","/mnt/g2home/daniel/experiments/vae/inverting-is-hard/stylegan-fork/saved/generated.npy")
-        Models.process_celeba("models/celeba/test",generate=False)
+        Models.process_celeba("models/celeba/test",generate=None)
         for epoch in range(9999,190000,10000):
             Models.process_celeba("models/celeba/gen_{}".format(epoch),
             "/mnt/g2home/zombori/wgan_gp_orig/generated/celeba_{}.npy".format(epoch))

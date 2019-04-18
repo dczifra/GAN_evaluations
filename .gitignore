@@ -4,6 +4,8 @@ cikkek
 result
 munkres-tensorflow
 tf_matrix_multiplication
+build
+models/celeba
 *.gz
 *vscode*
 *_checkpoint*

@@ -202,14 +202,24 @@ int main(int argc, char *argv[])
         cout<<"Matching : \n";
         generate_graph(m->N,m->size, m->folder1, m->folder2);
         myfile.open(m->out);
+        string log_file = (string) m->out + ".log";
+        ofstream logger(log_file);
+        
         myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
+        logger<<m->range<<" "<<m->N<<" "<<m->range<<endl;
+        clock_t t;
         
         for (int i = 1; m->range * i <= m->N; i++)
         {
+            t = clock();
             //generate_graph(m->range*i,m->size, m->folder1, m->folder2);
             if(m->myMode==Menu::FLOW) myfile<<flowMatching(m->range*i)<<" ";
             else myfile << match_mnist(m->range*i,m->folder2) << " ";
+            
+            t=clock()-t;
+            logger<<((float)t)/CLOCKS_PER_SEC<<" ";
         }
+        logger.close();
     }
     else
     {
