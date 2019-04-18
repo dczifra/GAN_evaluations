@@ -5,7 +5,7 @@ import sys
 def different_model_compare( files,title,labels,
         xlabel="Minta meret",ylabel="[Párosítás]/[Minta meret]",second=False):
 
-    colors=['r','g','b','y','p']
+    colors=['r','g','b','y','p','r--']
     fig, ax1 = plt.subplots()
     if(second): 
         ax2=ax1.twinx()
@@ -201,16 +201,16 @@ if(__name__=="__main__"):
 # Param3: batch size: number of samples from the dataset
     if(sys.argv[1]=="matching"):
         different_model_compare(files=["models/celeba/gen_9999/compare.txt",
-        "models/celeba/gen_49999/compare.txt",
+        "models/celeba/test/compare.txt",
         "models/celeba/gen_99999/compare.txt",
         "models/celeba/gen_149999/compare.txt",
-        "models/celeba/dani/compare.txt"],
+        "models/celeba/dani/compare.txt","models/celeba/test/compare.txt"],
                 title="matching celeba",
-                labels=["celeba 9999","49999","99999","149999","dani"],second=False)
+                labels=["celeba 9999","test","99999","149999","Dani","test"],second=False)
         
     elif(sys.argv[1]=="pict"):
         model1="models/celeba/train/"#"data/mnist/train/"
-        model2="models/celeba/dani/"#"models/wgan/generator_1000"
+        model2="models/celeba/gen_149999/"#"models/wgan/generator_1000"
         plot_matching_pairs(model1+"data",model2+"/data",
             model2+"/mnist_result_{}.txt".format(1000))
     else:
