@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 def different_model_compare( files,title,labels,
-        xlabel="Minta meret",ylabel="[Párosítás]/[Minta meret]",second=False):
+        xlabel="Minta meret",ylabel="[Párosítás]/[Minta meret]",second=False, time=False):
 
     colors=['r','g','b','y','p','r--']
     fig, ax1 = plt.subplots()
@@ -19,11 +19,17 @@ def different_model_compare( files,title,labels,
         print(data)
         if(second):
             data2=np.array(test.readline().split(" "))[:-1].astype(np.float)
-            #print(data2)
+            print(data2)
         
-        ax1.plot(range(a,b+delta,delta),data,colors[i],label=labels[i])
         if(second):
-            ax2.plot(range(a,b+delta,delta),data2,colors[i]+'--',label=labels[i])
+            #ax2.bar(range(a,b+delta,delta),data2, color='r')
+            ax2.plot(range(a,b+delta,delta),data2,colors[i],label=labels[i])
+        if(time and i==len(files)-1):
+            ax2=ax1.twinx()
+            ax2.set_ylabel("Value of the flow/Max matching")
+            plt.plot(range(a,b+delta,delta),data)
+        else:
+            ax1.plot(range(a,b+delta,delta),data,colors[i],label=labels[i])
         i+=1
     
     plt.xlabel(xlabel)
@@ -165,7 +171,13 @@ def celeba_example():
 if(__name__=="__main__"):
 # Param1: N --> model epoch (Pl.: 1000, 5000, 10000)
 # Param3: batch size: number of samples from the dataset
-    if(sys.argv[1]=="matching"):
+    if(sys.argv[1]=="test"):
+        different_model_compare(files=[
+            "models/celeba/test/compare.txt", 
+            "models/celeba/test/compare.txt.log"],
+                title="matching celeba",
+                labels=["test", "time"],time=True)
+    elif(sys.argv[1]=="matching"):
         different_model_compare(files=["models/celeba/gen_9999/compare.txt",
         "models/celeba/gen_99999/compare.txt",
         "models/celeba/gen_149999/compare.txt",
