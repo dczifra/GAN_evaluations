@@ -164,6 +164,23 @@ class Models:
 
         print(" ".join(args+[model_filename+"/compare.txt"]))
         os.system(" ".join(args+[model_filename+"/compare.txt"]))
+
+    def toy_black_white(model_filename, model= "dsprite", generate=False):
+        if(generate):
+            if(model_filename.split('.')[-1] == "npy"):
+                folder = "".join(model_filename.split("/")[:-1])
+                Models.generate_from_npy(generate, folder+"/data")
+            else:
+                gen_model=Models.get_model(model_filename)
+                Models.generate_samples(gen_model, model_filename+"/data",Models.N)
+        args=["bin/main",
+              "-size","64,64",
+              "-folder1","models/{}/train/data".format(model),
+              "-folder2",model_filename+"/data","-N {}".format(Models.N),"-range {}".format(Models.range),
+              "-out"]
+        print(" ".join(args+[model_filename+"/compare.txt"]))
+        os.system(" ".join(args+[model_filename+"/compare.txt"]))
+        
     def measure_process(command, type_,N,r):
         start=time.time()
         os.system(command)
@@ -185,21 +202,31 @@ class Models:
         for model in ["dcgan_mnist","lsgan_mnist","wgan_mnist"]:
             Models.process_modell("models/downloaded/{}".format(model),generate=gen)
 
+    
 
 if(__name__=="__main__"):
     Models.N=int(sys.argv[2])
     Models.range=int(sys.argv[3])
     Models.myTimer=open("mytimer.txt","w")
 
-    if(sys.argv[1]=="one"):
+    if(sys.argv[1] == "toy"):
+        model = sys.argv[4] 
+        Models.generate_from_npy("models/{}/train/train.npy".format(model),"models/{}/train/data".format(model))
+        #Models.generate_from_npy("models/{}/train/train.npy".format(model),"models/{}/test/data".format(model),1)
+        Models.generate_from_npy("models/{}/test/test.npy".format(model),"models/{}/test/data".format(model))
+        
+        Models.toy_black_white("models/{}/test".format(model), model)
+        Models.toy_black_white("models/{}/wgan/gen_8000/generator_8000".format(model), model, True)
+        Models.toy_black_white("models/{}/wgan-gp/gen_8000/generator_8000".format(model), model, True)
+    elif(sys.argv[1]=="one"):
         Models.process_celeba("models/celeba/test",generate=None)
-    if(sys.argv[1]=="init"):
+    elif(sys.argv[1]=="init"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data",0)
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test/data",1)
         Models.process_celeba("models/celeba/test",generate=None)
         print("=== End of init ===")
-    if(sys.argv[1]=="limits"):
+    elif(sys.argv[1]=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
         Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
         Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_10000")

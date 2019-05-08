@@ -63,14 +63,16 @@ def read_mathcing(mathing_file):
 
 def print_pictures(pict1, pict2, score,ind=1):
     N=len(score)
-    size=np.shape
+    size=np.shape(pict1)[1:]
+    print(size, np.prod(size))
     plt.figure(figsize=(N,2))
     for i in range(N):
         vect=np.array(pict1[i])-np.array(pict2[i])
-        vect=np.reshape(vect,(64*64*3))
+        vect=np.reshape(vect,(np.prod(size)))
         #vect=np.reshape(vect,(28*28))
         print(i,np.linalg.norm(vect,2))
         ax=plt.subplot(2,N,i+1)
+
         plt.imshow(pict1[i])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -83,6 +85,17 @@ def print_pictures(pict1, pict2, score,ind=1):
     plt.savefig('temp_plot{}.png'.format(ind))
     plt.show()
 
+def hist(model_path1, model_path2, matching_file):
+    plt.close()
+    match=read_mathcing(matching_file)
+    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores.sort()
+    score=[int(match[int(i)][2]) for _,i in scores]
+    plt.hist(score, 50, density=True, facecolor='g', alpha=0.75)
+    #plt.axis([40, 1000, 0, 0.003])
+    plt.savefig('temp_plot_hist.png')
+    plt.show()
+    plt.close()
 def plot_matching_pairs(model_path1, model_path2, matching_file):
     model_data1=read_model_data(model_path1)
     model_data2=read_model_data(model_path2)
@@ -92,7 +105,10 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
         print(size)
         model_data1=np.resize(model_data1,(size[0],size[1],size[2]//3,3)).astype(int)
         model_data2=np.resize(model_data2,(size[0],size[1],size[2]//3,3)).astype(int)
-
+    else:
+        model_data1=np.resize(model_data1,(size[0],size[1],size[2])).astype(int)
+        model_data2=np.resize(model_data2,(size[0],size[1],size[2])).astype(int)
+        
     match=read_mathcing(matching_file)
 
     # ===== Print first N pair of matching ====
@@ -103,7 +119,6 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
 
     scores=[int(match[i][2]) for i in range(len(match))]
     print(min(scores),max(scores))
-
     print_pictures(pict1,pict2,score,1)
     # ===== Print N best picture =====
     scores=[(int(match[i][2]),i) for i in range(len(match))]
@@ -114,7 +129,14 @@ def plot_matching_pairs(model_path1, model_path2, matching_file):
     score=[match[int(i)][2] for _,i in scores]
     print_pictures(pict1,pict2,score,2)
     #print(model_data1[0])
-
+    # ===== Print first N pair of matching ====
+    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores.sort()
+    scores=scores[-N:]
+    pict1=[model_data1[match[int(i)][0]] for _,i in scores]
+    pict2=[model_data2[match[int(i)][1]] for _,i in scores]
+    score=[match[int(i)][2] for _,i in scores]
+    print_pictures(pict1,pict2,score,3)
 
 def wgan_wgan_gp_type(N,type,second=False):
     title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
@@ -171,7 +193,28 @@ def celeba_example():
 if(__name__=="__main__"):
 # Param1: N --> model epoch (Pl.: 1000, 5000, 10000)
 # Param3: batch size: number of samples from the dataset
-    if(sys.argv[1]=="test"):
+    if(sys.argv[1]=="toy"):
+        model=sys.argv[2] 
+        different_model_compare(files=[
+            "models/{}/test/compare.txt".format(model),
+            "models/{}/wgan/gen_8000/generator_8000/compare.txt".format(model),
+            "models/{}/wgan-gp/gen_8000/generator_8000/compare.txt".format(model)],
+                                title="Matchig loss {}".format(model),
+                                labels=["test", "wgan", "wgan-gp"])
+    elif(sys.argv[1]=="toypict"):
+        model=sys.argv[2]
+        generator = sys.argv[3]
+        plot_hist = (sys.argv[4] == "True")
+        model1="models/{}/train/".format(model)
+        model2="models/{}/{}".format(model, generator)
+        if(plot_hist):
+            hist(model1+"data",model2+"/data", model2+"/mnist_result_{}.txt".format(1000))
+        else:
+            plot_matching_pairs(model1+"data",model2+"/data", model2+"/mnist_result_{}.txt".format(1000))
+        
+        
+                                
+    elif(sys.argv[1]=="test"):
         different_model_compare(files=[
             "models/celeba/test/compare.txt", 
             "models/celeba/test/compare.txt.log"],
