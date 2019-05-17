@@ -52,9 +52,9 @@ public:
             for(int j=0;j<M;j++){
                 long double temp;
                 myfile>>temp;
-                int t=(int) temp;
+                //int t=(int) temp;
                 if(i<maxN && j<maxN){
-                    mtx[i][j]=(long double) t;
+                    mtx[i][j]=(long double) temp;
                 }
             }
         }

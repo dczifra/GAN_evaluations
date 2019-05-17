@@ -7,6 +7,7 @@ from keras.models import load_model
 from keras.models import model_from_json
 from eval.try_eval import fid_score
 
+import plots
 
 class Models:
     nojson=False
@@ -37,10 +38,12 @@ class Models:
         else:
             return str(int(128.0*(1.0+elem[0])))
 
+    # TDOD: 3 csatorna
     def generate_samples(model,output_file,N=1000):
         # ===== Generate samples: =====
         batch_size=N
-        latent_dim=100
+        latent_dim=model.layers[0].input_shape[-1]
+        print("Latent dim {}".format(latent_dim))
         noise = np.random.normal(0, 1, (batch_size, latent_dim))
         
         # Generate a batch of new images
@@ -165,21 +168,29 @@ class Models:
         print(" ".join(args+[model_filename+"/compare.txt"]))
         os.system(" ".join(args+[model_filename+"/compare.txt"]))
 
-    def toy_black_white(model_filename, model= "dsprite", generate=False):
+    def toy_black_white(model_filename = "models/dataset/dataset/batch_name", dataset= "dsprite", generate=False, size = [64,64,1]):
         if(generate):
-            if(model_filename.split('.')[-1] == "npy"):
-                folder = "".join(model_filename.split("/")[:-1])
-                Models.generate_from_npy(generate, folder+"/data")
+            if(os.path.exists(model_filename+".npy")):
+                Models.generate_from_npy(model_filename+".npy", model_filename+"/data")
             else:
                 gen_model=Models.get_model(model_filename)
                 Models.generate_samples(gen_model, model_filename+"/data",Models.N)
+
+        print(size)
+        if(len(size)>2):
+            size[1]*=size[2]
+            
+        size = str(size[0])+","+str(size[1])
         args=["bin/main",
-              "-size","64,64",
-              "-folder1","models/{}/train/data".format(model),
+              "-size",size,
+              "-folder1","models/{}/train/data".format(dataset),
               "-folder2",model_filename+"/data","-N {}".format(Models.N),"-range {}".format(Models.range),
               "-out"]
         print(" ".join(args+[model_filename+"/compare.txt"]))
         os.system(" ".join(args+[model_filename+"/compare.txt"]))
+        Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",Models.N,Models.range)
+        Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",Models.N,Models.range)
+        #fid_score("models/{}/train".format(dataset), model_filename) 
         
     def measure_process(command, type_,N,r):
         start=time.time()
@@ -202,35 +213,88 @@ class Models:
         for model in ["dcgan_mnist","lsgan_mnist","wgan_mnist"]:
             Models.process_modell("models/downloaded/{}".format(model),generate=gen)
 
+def parse():
+    parser = argparse.ArgumentParser(description='Plot for specific model')
+    parser.add_argument('-dataset', metavar='STRING', dest="dataset",
+        type = str, help='The dataset name', required=True)
+    parser.add_argument('-N', metavar='INT', dest="N", type = int,
+        help='Number of max batch size', default = 2000)
+    parser.add_argument('-r', metavar='INT', dest="r", type = int,
+        help='Range of batch steps (r, N)', default = 100)
+    parser.add_argument('-folder', metavar='FILE', dest="folder", type = str,
+        help='The follder, where you want the output', default = ".")
+    parser.add_argument('-choose', metavar='STR', dest="mode", type=str,
+                        help="Mode foor different type of data")
+    parser.add_argument('-batchs', metavar='TUPLE', dest="batchs", type=str,nargs="+",
+                help="Batchs example: generator_8000")
+    parser.add_argument('-size', metavar='TUPLE', dest="size", type=int,nargs="+",
+                                        help="Size example: 64 64 1")
     
+    return parser
 
+import argparse
 if(__name__=="__main__"):
-    Models.N=int(sys.argv[2])
-    Models.range=int(sys.argv[3])
+    args=parse().parse_args()
+    Models.N=args.N
+    Models.range=args.r
     Models.myTimer=open("mytimer.txt","w")
 
-    if(sys.argv[1] == "toy"):
-        model = sys.argv[4] 
-        Models.generate_from_npy("models/{}/train/train.npy".format(model),"models/{}/train/data".format(model))
-        #Models.generate_from_npy("models/{}/train/train.npy".format(model),"models/{}/test/data".format(model),1)
-        Models.generate_from_npy("models/{}/test/test.npy".format(model),"models/{}/test/data".format(model))
-        
-        Models.toy_black_white("models/{}/test".format(model), model)
-        Models.toy_black_white("models/{}/wgan/gen_8000/generator_8000".format(model), model, True)
-        Models.toy_black_white("models/{}/wgan-gp/gen_8000/generator_8000".format(model), model, True)
-    elif(sys.argv[1]=="one"):
+    if(args.mode == "toy"):
+        train_folder = "models/{}/train".format(args.dataset)
+        test_folder = "models/{}/test".format(args.dataset)
+        outdir = "models/{}".format(args.dataset)
+        Models.generate_from_npy(train_folder+".npy", train_folder+"/data")
+        Models.generate_from_npy(test_folder+".npy", test_folder+"/data")
+
+        #Models.toy_black_white(test_folder, args.dataset, False, args.size)
+        gen_models = ["wgan", "wgan-gp", "vae"]
+        all_models = [test_folder]
+        for batch in args.batchs:
+            for model in gen_models:
+                # ===== Generate modell, and evaluate =====
+                act_model = "models/{}/{}/{}".format(args.dataset, model, batch)
+                all_models.append(act_model)
+        for act_model in all_models:
+            Models.toy_black_white(act_model, args.dataset, ("test" not in act_model), args.size)
+            # ===== Plot Matching =====
+            for r in range(Models.range, Models.N+Models.range, Models.range):
+                print('\r',r, end='')
+                plots.plot_matching_pairs(train_folder+"/data", act_model+"/data",
+                    act_model+"/mnist_result_{}.txt".format(r),
+                    r,
+                    act_model)
+                plots.hist(act_model+"/mnist_result_{}.txt".format(r), act_model)
+                
+            (m1,m2) = plots.get_nth_matching(train_folder+"/data",act_model+"/data", act_model+"/mnist_result_{}.txt".format(Models.N))
+            plots.plotImages(m1, 10, 10, act_model+"/every100_train.png", text=None)
+            plots.plotImages(m2, 10, 10, act_model+"/every100_test.png", text=None)
+            
+        # ===== Compare models =====
+        #models = ["models/{}/test/compare.txt".format(args.dataset)]+\
+            ["models/{}/{}/{}/compare.txt".format(args.dataset, model, batch) for model in gen_models]
+        plots.different_model_compare(files=[model+"/compare.txt" for model in all_models],
+                    title="Matchig loss {}".format(args.dataset),
+                                      labels=["test"]+ gen_models, outfile=outdir+"/model_compare.png")
+        plots.different_model_compare(files=[model+"/deficit.txt" for model in all_models],
+            title="Matchig loss {}".format(args.dataset),
+            labels=["test"]+ gen_models, outfile=outdir+"/deficit.png")
+        plots.different_model_compare(files=[model+"/defFlow.txt" for model in all_models],
+            title="Matchig loss {}".format(args.dataset),
+            labels=["test"]+ gen_models, outfile=outdir+"/deFlow.png")
+
+    elif(args.mode=="one"):
         Models.process_celeba("models/celeba/test",generate=None)
-    elif(sys.argv[1]=="init"):
+    elif(args.mode=="init"):
         #Models.generate_from_npy("/home/doma/celeba_64_64_color.npy","models/celeba/train/data")
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/train/data",0)
         Models.generate_from_npy("/home/datasets/celeba_64_64_color.npy","models/celeba/test/data",1)
         Models.process_celeba("models/celeba/test",generate=None)
         print("=== End of init ===")
-    elif(sys.argv[1]=="limits"):
+    elif(args.mode=="limits"):
         Models.stretching_limits(Models.N,Models.range,"data/mnist/test",gen=False)
         Models.stretching_limits(Models.N,Models.range,"models/wgan-gp/generator_10000")
         Models.stretching_limits(Models.N,Models.range,"models/wgan/generator_10000")
-    elif(sys.argv[1]=="celeba"):
+    elif(args.mode=="celeba"):
         #Models.log=True
         #Models.process_celeba("models/celeba/test","/home/doma/model_celeba10000.npy")
         Models.process_celeba("models/celeba/dani","/mnt/g2home/daniel/experiments/vae/inverting-is-hard/stylegan-fork/saved/generated.npy")
