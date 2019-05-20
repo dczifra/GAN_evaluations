@@ -247,7 +247,8 @@ if(__name__=="__main__"):
         Models.generate_from_npy(test_folder+".npy", test_folder+"/data")
 
         #Models.toy_black_white(test_folder, args.dataset, False, args.size)
-        gen_models = ["wgan", "wgan-gp", "vae"]
+        #gen_models = ["wgan", "wgan-gp", "vae"]
+        gen_models = ["wgan", "wgan-gp"]
         all_models = [test_folder]
         for batch in args.batchs:
             for model in gen_models:
@@ -268,10 +269,7 @@ if(__name__=="__main__"):
             (m1,m2) = plots.get_nth_matching(train_folder+"/data",act_model+"/data", act_model+"/mnist_result_{}.txt".format(Models.N))
             plots.plotImages(m1, 10, 10, act_model+"/every100_train.png", text=None)
             plots.plotImages(m2, 10, 10, act_model+"/every100_test.png", text=None)
-            
         # ===== Compare models =====
-        #models = ["models/{}/test/compare.txt".format(args.dataset)]+\
-            ["models/{}/{}/{}/compare.txt".format(args.dataset, model, batch) for model in gen_models]
         plots.different_model_compare(files=[model+"/compare.txt" for model in all_models],
                     title="Matchig loss {}".format(args.dataset),
                                       labels=["test"]+ gen_models, outfile=outdir+"/model_compare.png")

@@ -132,9 +132,9 @@ def get_nth_matching(model_path1, model_path2, matching_file):
 def hist(matching_file, outdir):
     plt.close('all')
     match=read_mathcing(matching_file)
-    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores=[(float(match[i][2]),i) for i in range(len(match))]
     scores.sort()
-    score=[int(match[int(i)][2]) for _,i in scores]
+    score=[float(match[int(i)][2]) for _,i in scores]
     plt.hist(score, 50, density=True, facecolor='g', alpha=0.75)
     #plt.axis([40, 1000, 0, 0.003])
     plt.savefig('{}/hist_{}.png'.format(outdir, 1+max([m[0] for m in match])))
@@ -163,11 +163,9 @@ def plot_matching_pairs(model_path1, model_path2, matching_file, N, outdir):
     pict2=[model_data2[match[i][1]] for i in range(N)]
     score=[match[i][2] for i in range(N)]
 
-    scores=[int(match[i][2]) for i in range(len(match))]
-    #print(min(scores),max(scores))
     print_pictures(pict1,pict2,score,"random_"+batch, outdir)
     # ===== Print N best picture =====
-    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores=[(float(match[i][2]),i) for i in range(len(match))]
     scores.sort()
     scores=scores[:N]
     pict1=[model_data1[match[int(i)][0]] for _,i in scores]
@@ -175,8 +173,9 @@ def plot_matching_pairs(model_path1, model_path2, matching_file, N, outdir):
     score=[match[int(i)][2] for _,i in scores]
     print_pictures(pict1,pict2,score,"best_"+batch, outdir)
     #print(model_data1[0])
+
     # ===== Print first N pair of matching ====
-    scores=[(int(match[i][2]),i) for i in range(len(match))]
+    scores=[(float(match[i][2]),i) for i in range(len(match))]
     scores.sort()
     scores=scores[-N:]
     pict1=[model_data1[match[int(i)][0]] for _,i in scores]
