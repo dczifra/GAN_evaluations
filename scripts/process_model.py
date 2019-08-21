@@ -1,3 +1,4 @@
+
 import numpy as np
 import os
 import sys
@@ -187,10 +188,10 @@ class Models:
               "-folder2",model_filename+"/data","-N {}".format(Models.N),"-range {}".format(Models.range),
               "-out"]
         print(" ".join(args+[model_filename+"/compare.txt"]))
-        os.system(" ".join(args+[model_filename+"/compare.txt"]))
-        Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",Models.N,Models.range)
-        Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",Models.N,Models.range)
-        #fid_score("models/{}/train".format(dataset), model_filename) 
+        #os.system(" ".join(args+[model_filename+"/compare.txt"]))
+        #Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",Models.N,Models.range)
+        #Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",Models.N,Models.range)
+        fid_score("models/{}/train".format(dataset), model_filename) 
         
     def measure_process(command, type_,N,r):
         start=time.time()
@@ -225,11 +226,11 @@ def parse():
         help='The follder, where you want the output', default = ".")
     parser.add_argument('-choose', metavar='STR', dest="mode", type=str,
                         help="Mode foor different type of data")
-    parser.add_argument('-batchs', metavar='TUPLE', dest="batchs", type=str,nargs="+",
+    parser.add_argument('-batchs', metavar='TUPLE', dest="batchs", type=str, nargs="+",
                 help="Batchs example: generator_8000")
-    parser.add_argument('-size', metavar='TUPLE', dest="size", type=int,nargs="+",
+    parser.add_argument('-size', metavar='TUPLE', dest="size", type=int, nargs="+",
                                         help="Size example: 64 64 1")
-    
+    parser.add_argument('--plot', metavar='BOOLEAN', dest="plot", const = True, default = False, nargs='?')
     return parser
 
 import argparse
@@ -242,44 +243,52 @@ if(__name__=="__main__"):
     if(args.mode == "toy"):
         train_folder = "models/{}/train".format(args.dataset)
         test_folder = "models/{}/test".format(args.dataset)
+        new_test_folder = "models/{}/new_test".format(args.dataset)
         outdir = "models/{}".format(args.dataset)
-        Models.generate_from_npy(train_folder+".npy", train_folder+"/data")
-        Models.generate_from_npy(test_folder+".npy", test_folder+"/data")
+        print(args.plot)
+        if(not args.plot):
+            Models.generate_from_npy(train_folder+".npy", train_folder+"/data")
+            Models.generate_from_npy(test_folder+".npy", test_folder+"/data")
+            #Models.generate_from_npy(new_test_folder+".npy", new_test_folder+"/data")
 
-        #Models.toy_black_white(test_folder, args.dataset, False, args.size)
-        #gen_models = ["wgan", "wgan-gp", "vae"]
-        gen_models = ["wgan", "wgan-gp"]
+        
+        #gen_models = ["good_wgan", "wgan", "wgan-gp"]
+        gen_models = ["wgan", "wgan-gp"]  
         all_models = [test_folder]
+        labels = ["test"]+ gen_models
         for batch in args.batchs:
             for model in gen_models:
                 # ===== Generate modell, and evaluate =====
                 act_model = "models/{}/{}/{}".format(args.dataset, model, batch)
                 all_models.append(act_model)
         for act_model in all_models:
-            Models.toy_black_white(act_model, args.dataset, ("test" not in act_model), args.size)
+            if(not args.plot): Models.toy_black_white(act_model, args.dataset, ("test" not in act_model), args.size)
             # ===== Plot Matching =====
             for r in range(Models.range, Models.N+Models.range, Models.range):
                 print('\r',r, end='')
-                plots.plot_matching_pairs(train_folder+"/data", act_model+"/data",
-                    act_model+"/mnist_result_{}.txt".format(r),
-                    r,
-                    act_model)
-                plots.hist(act_model+"/mnist_result_{}.txt".format(r), act_model)
+                #plots.plot_matching_pairs(train_folder+"/data", act_model+"/data",
+                #    act_model+"/mnist_result_{}.txt".format(r),r,act_model)
+                #plots.hist(act_model+"/mnist_result_{}.txt".format(r), act_model)
                 
             (m1,m2) = plots.get_nth_matching(train_folder+"/data",act_model+"/data", act_model+"/mnist_result_{}.txt".format(Models.N))
             plots.plotImages(m1, 10, 10, act_model+"/every100_train.png", text=None)
             plots.plotImages(m2, 10, 10, act_model+"/every100_test.png", text=None)
+            plots.hist_radius(train_folder+"/data", act_model+"/data",
+                act_model+"/mnist_result_{}.txt".format(Models.N), act_model)
+            plots.plot_matching_pairs(train_folder+"/data", act_model+"/data",
+                act_model+"/mnist_result_{}.txt".format(Models.N),r,act_model)
+            plots.hist(act_model+"/mnist_result_{}.txt".format(Models.N), act_model) 
         # ===== Compare models =====
         plots.different_model_compare(files=[model+"/compare.txt" for model in all_models],
-                    title="Matchig loss {}".format(args.dataset),
-                                      labels=["test"]+ gen_models, outfile=outdir+"/model_compare.png")
+            title="Párosítás Pontszám {}".format(args.dataset),
+            labels=labels, outfile=outdir+"/model_compare.png")
         plots.different_model_compare(files=[model+"/deficit.txt" for model in all_models],
-            title="Matchig loss {}".format(args.dataset),
-            labels=["test"]+ gen_models, outfile=outdir+"/deficit.png")
+            title="Hiány {}".format(args.dataset.upper()),
+                                      labels=labels, xlabel="Elhagyott élek száma", ylabel = "Maximális Párosítás mérete (%)", outfile=outdir+"/deficit.png")
         plots.different_model_compare(files=[model+"/defFlow.txt" for model in all_models],
-            title="Matchig loss {}".format(args.dataset),
-            labels=["test"]+ gen_models, outfile=outdir+"/deFlow.png")
-
+            title="Átlagos folyamérték {}".format(args.dataset.upper()),
+            xlabel="Elhagyott élek száma", ylabel="[Párosítás érték]/[Párosítás méret]", labels=labels, outfile=outdir+"/deFlow.png")
+        
     elif(args.mode=="one"):
         Models.process_celeba("models/celeba/test",generate=None)
     elif(args.mode=="init"):

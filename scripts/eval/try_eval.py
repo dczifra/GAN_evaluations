@@ -45,6 +45,7 @@ def read_dataset(path):
 def fid_score(train_file,test_file):
     train=read_dataset(train_file+"/data/")
     test=read_dataset(test_file+"/data/")
+    print(np.shape(train),np.shape(test),test_file)
     calc_fid(train,test,test_file+"/fidscore.txt")
     
 
