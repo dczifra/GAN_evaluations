@@ -51,6 +51,7 @@ struct Menu
     int range = -1;
     string out = "NO_OUTFILE_IS_GIVEN";
     Mode myMode=DEFAULT;
+    bool generate = false;
 };
 
 const char* helpmessage="Description:\n   Min cost matching of the two picture sets\n"
@@ -99,7 +100,8 @@ Menu *help(vector<string> argv)
         else if (argv[i] == "-flow")    m->myMode=Menu::FLOW;
         else if (argv[i] == "-defFlow") m->myMode=Menu::DEFFLOW;
         else if (argv[i] == "-all") m->myMode=Menu::ALL;
-    }
+        else if (argv[i] == "-nogen") m->generate=false;    
+}
     return m;
 }
 
@@ -161,20 +163,22 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < argc; i++)
         argv_.push_back((string)argv[i]);
-    
+
     Menu *m = help(argv_);
-    if (m->myMode==Menu::HELP)
+    bool is_help = m->myMode==Menu::HELP;
+
+    if(!is_help && m->generate)
+            generate_graph(m->N,m->size, m->folder1, m->folder2);
+
+    if (is_help)
         return 1;
     else if(m->myMode==Menu::ALL){
-        generate_graph(m->N,m->size, m->folder1, m->folder2);
         for(int i=1;i<10;i++){
             match_mnist(m->range*i,m->folder2);
         }
         flowMatching(m->N);
     }
     else if(m->myMode==Menu::DEFICIT || m->myMode==Menu::DEFFLOW){
-        generate_graph(m->N,m->size, m->folder1, m->folder2);
-
         myfile.open(m->out);
         int by=1;
         int until=40;
@@ -200,22 +204,21 @@ int main(int argc, char *argv[])
     else if (m->myMode==Menu::FLOW || m->myMode==Menu::DEFAULT)
     {
         cout<<"Matching : \n";
-        generate_graph(m->N,m->size, m->folder1, m->folder2);
         myfile.open(m->out);
         string log_file = (string) m->out + ".log";
         ofstream logger(log_file);
-        
+
         myfile<<m->range<<" "<<m->N<<" "<<m->range<<endl;
         logger<<m->range<<" "<<m->N<<" "<<m->range<<endl;
         clock_t t;
-        
+
         for (int i = 1; m->range * i <= m->N; i++)
         {
             t = clock();
             //generate_graph(m->range*i,m->size, m->folder1, m->folder2);
             if(m->myMode==Menu::FLOW) myfile<<flowMatching(m->range*i)<<" ";
             else myfile << match_mnist(m->range*i,m->folder2) << " ";
-            
+
             t=clock()-t;
             logger<<((float)t)/CLOCKS_PER_SEC<<" ";
         }
@@ -223,7 +226,6 @@ int main(int argc, char *argv[])
     }
     else
     {
-        generate_graph(m->N,m->size, m->folder1, m->folder2);
         match_mnist(m->N,m->folder2);
     }
 
@@ -232,7 +234,7 @@ int main(int argc, char *argv[])
 
 
     //cout<<"===== Min Cost Perf Matching with Mincostflow ====="<<endl;
-    
+
 
     return 0;
 }
