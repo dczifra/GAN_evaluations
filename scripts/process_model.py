@@ -1,4 +1,3 @@
-
 import numpy as np
 import os
 import sys
@@ -11,17 +10,18 @@ from eval.try_eval import fid_score
 import plots
 
 class Models:
-    nojson=False
-    myTimer=None
     N=2500
     range=50
     log=False
+    nojson=False
+    myTimer=None
 
     def get_model(model_file):
         if(Models.nojson):
             from keras.models import load_model
             model = load_model(model_file+".h5")
             return model
+        
         # load json and create model
         json_file = open(model_file+'.json', 'r')
         loaded_model_json = json_file.read()
@@ -49,7 +49,6 @@ class Models:
         
         # Generate a batch of new images
         gen_imgs = model.predict(noise)
-        #print(np.shape(gen_imgs))
 
         # ===== Write out to file =====
         if(not os.path.isdir(output_file)):
@@ -70,10 +69,12 @@ class Models:
     def generate_from_npy(input, output_file, parity=None):
         N=Models.N
         print("Loading {} ...".format(input))
+
         data=np.load(input)
         size=np.shape(data)
         data=np.resize(data,(size[0],size[1],size[2]*size[3]))
         print(size)
+        
         # ===== Write out to file =====
         if(not os.path.isdir(output_file)):
             os.makedirs(output_file)
@@ -99,62 +100,6 @@ class Models:
             if(iter2 > N): break;
             elif(Models.log): print("\r{}".format(iter),end=" ")
             
-
-    def generate_mnist(N,test=False,):
-        # ===== Get MNIST =====
-        from keras.datasets import mnist
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        print("Size of MNIST: ",len(x_train),len(x_test))
-
-        # ===== Choose dataset, and create folder(s) =====
-        filename="data/mnist/"+("test/data" if test else "train/data")
-        data=(x_test if test else x_train)
-        np.random.shuffle(data)
-        if(not os.path.isdir(filename)):
-            os.makedirs(filename)
-            
-        for i in range(min(N,len(data))):
-            myfile=open(filename+"/image_"+str(i)+".txt","w")
-            for row in data[i]:
-                for elem in row:
-                    myfile.write(str(elem)+" ")
-                myfile.write("\n")
-
-    def tutorial():
-        Models.generate_mnist(10,False)
-        gen_model=Models.get_model("data/mnist_wgan/generator_1000")
-        Models.generate_samples(gen_model,"data/mnist/wgan")
-
-    def stretching_limits(n,r,model_filename,gen=True):
-        sample_size=n
-        if(gen):
-            gen_model=Models.get_model(model_filename)
-            Models.generate_samples(gen_model,model_filename+"/data",sample_size)
-
-        cmd="bin/main -size 28,28 -folder1 data/mnist/train/data -folder2 {}/data -N {} -range {} -out {}/compare_limit.txt".format(model_filename,n,r,model_filename)
-        print(cmd)
-        Models.measure_process(cmd,"Hun",n,"")
-    
-    def process_modell(model_filename,generate=False):
-        N=Models.N
-        r=Models.range
-        if(generate):
-            gen_model=Models.get_model(model_filename)
-            Models.generate_samples(gen_model,model_filename+"/data",N)
-
-        args=["bin/main",
-            "-size","28,28",
-            "-folder1","data/mnist/train/data",\
-            "-folder2",model_filename+"/data","-N {}".format(N),"-range {}".format(r),\
-            "-out"]
-
-        print(" ".join(args+[model_filename+"/compare.txt"]))
-        Models.measure_process(" ".join(args+[model_filename+"/compare.txt"]),"Hun",N,r)
-        #Models.measure_process(" ".join(args+[model_filename+"/flow.txt","-flow"]),"Flow",N,r)
-        #Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",N,r)
-        #Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",N,r)
-        #fid_score("data/mnist/train",model_filename)
-
     def process_celeba(model_filename,generate=None):
         if(generate!=None):
             Models.generate_from_npy(generate,model_filename+"/data")
@@ -193,27 +138,6 @@ class Models:
         #Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",Models.N,Models.range)
         fid_score("models/{}/train".format(dataset), model_filename) 
         
-    def measure_process(command, type_,N,r):
-        start=time.time()
-        os.system(command)
-        p1=time.time()
-        Models.myTimer.write("{} with N={} range={} : {} \n".format(type_,N,r,p1-start))
-
-    def run_all(gen=False):
-        Models.nojson=False
-        Models.process_modell("data/mnist/test")
-        for model in [1000,5000,10000]:
-            Models.process_modell("models/wgan/generator_{}".format(model),generate=gen)
-            Models.process_modell("models/wgan-gp/generator_{}".format(model),generate=gen)
-            exit()
-
-    def new_models():
-        gen=True
-        Models.nojson=True
-        #,"cgan_mnist","
-        for model in ["dcgan_mnist","lsgan_mnist","wgan_mnist"]:
-            Models.process_modell("models/downloaded/{}".format(model),generate=gen)
-
 def parse():
     parser = argparse.ArgumentParser(description='Plot for specific model')
     parser.add_argument('-dataset', metavar='STRING', dest="dataset",
@@ -312,5 +236,3 @@ if(__name__=="__main__"):
     
     Models.myTimer.close()
     exit()
-
-    Models.run_all(sys.argv[1]=="True")
