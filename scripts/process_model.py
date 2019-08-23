@@ -17,13 +17,16 @@ import numbers
 #              Helper Functions
 # ========================================
 
-def write_images(gen_imgs, folder):
+def write_images(gen_imgs, folder, transform=True):
     iter = 0
     for img in gen_imgs:
         myfile=open(folder+"/image_"+str(iter)+".txt","w")
         for row in img:
             for elem in row:
-                myfile.write(transform_num(elem)+" ")
+                if(not transform):
+                    myfile.write(str(elem)+" ")
+                else:
+                    myfile.write(transform_num(elem)+" ")
             myfile.write("\n")
         myfile.close()
         iter+=1
@@ -125,21 +128,24 @@ class Models:
 
     def generate_feature(picture_folder, shape, feature_net ):
         """ Generates features from the given pictures """
-        datas = read_model_data(picture_folder)
-        datas = np.resize(datas, (-1, shape[0],shape[1],shape[2]))
+        datas = read_model_data(picture_folder, Models.N)
+        datas = np.reshape(datas, (-1, shape[0],shape[1],shape[2]))
 
-        vgg = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
-        all_layers_model = Model(inputs = vgg.input, outputs = [layer.output for layer in vgg.layers][1:])
-        layers = all_layers_model.predict(datas[0:100])
-        layers = [elem[0][0] for elem in layers]
-        features = [[img] for img in layers[-1]]
-        
+        pretrained = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
+        #pretrained = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
+        #pretrained = keras.applications.mobilenet.MobileNet(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
+
+        all_layers_model = Model(inputs = pretrained.input, outputs = [layer.output for layer in pretrained.layers][1:])
+        myLayer = all_layers_model.predict(datas)[-1]
+        features = [[elem[0][0]] for elem in myLayer]
+        for x in features:
+            x = x / np.linalg.norm(x)
         print("Shape of features: {}".format(np.shape(features)))
 
         new_folder = os.path.join( picture_folder, "../", feature_net)
         if(not os.path.isdir(new_folder)):
             os.makedirs(new_folder)
-        write_images(features, new_folder)
+        write_images(features, new_folder, transform=False)
 
         return np.shape(features)[1:]
 
@@ -205,7 +211,7 @@ if(__name__=="__main__"):
 
     if(args.mode == "feature"):
         print("Hello {}".format(args.featureDist))
-        act_model = "models/{}/{}/{}".format(args.dataset, "wgan", "generator_1000")
+        act_model = "models/{}/{}/{}".format(args.dataset, "wgan", args.batchs[0])
         Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
         #size alallit
 

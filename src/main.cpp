@@ -51,7 +51,7 @@ struct Menu
     int range = -1;
     string out = "NO_OUTFILE_IS_GIVEN";
     Mode myMode=DEFAULT;
-    bool generate = false;
+    bool generate = true;
 };
 
 const char* helpmessage="Description:\n   Min cost matching of the two picture sets\n"

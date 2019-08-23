@@ -95,17 +95,18 @@ def plotImages2(data, n_x, n_y, name, text=None):
     if text is not None:
         img.text(10, 10, text)
     img.save(fileName)
-    
-def read_model_data(model_path,N = -1 ,mod2="image"):
+
+def read_model_data(model_path,N ,mod2="image"):
     model_data=[]
     i=-1
-    while(i<N or N == -1):
+    while(len(model_data)<N and i<1000):
         i+=1
         # Read the file:
         try:
             myfile=open(model_path+"/{}_{}.txt".format(mod2,i))
         except IOError:
-            break;
+            print(i, len(model_data), model_path+"/{}_{}.txt".format(mod2,i))
+            continue
 
         mtx=[]
         for line in myfile:
