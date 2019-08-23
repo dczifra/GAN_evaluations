@@ -2,12 +2,37 @@ import numpy as np
 import os
 import sys
 import time
+import keras
 
+from keras.models import Model
+from keras.layers import Input, Dense
 from keras.models import load_model
 from keras.models import model_from_json
 from eval.try_eval import fid_score
+from plots import read_model_data
 
 import plots
+import numbers
+# ========================================
+#              Helper Functions
+# ========================================
+
+def write_images(gen_imgs, folder):
+    iter = 0
+    for img in gen_imgs:
+        myfile=open(folder+"/image_"+str(iter)+".txt","w")
+        for row in img:
+            for elem in row:
+                myfile.write(transform_num(elem)+" ")
+            myfile.write("\n")
+        myfile.close()
+        iter+=1
+
+def transform_num(elem,npy=False):
+    if(npy or isinstance(elem, numbers.Number)):
+        return str(int(128.0*(1.0+elem)))
+    else:
+        return str(int(128.0*(1.0+elem[0])))
 
 class Models:
     N=2500
@@ -33,12 +58,6 @@ class Models:
         print("Loaded model ({}) from disk".format(model_file))
         return loaded_model
 
-    def transform_num(elem,npy=False):
-        if(npy):
-            return str(int(128.0*(1.0+elem)))
-        else:
-            return str(int(128.0*(1.0+elem[0])))
-
     # TDOD: 3 csatorna
     def generate_samples(model,output_file,N=1000):
         # ===== Generate samples: =====
@@ -53,18 +72,8 @@ class Models:
         # ===== Write out to file =====
         if(not os.path.isdir(output_file)):
             os.makedirs(output_file)
-        iter=0
-        for img in gen_imgs:
-            myfile=open(output_file+"/image_"+str(iter)+".txt","w")
-            for row in img:
-                for elem in row:
-                    myfile.write(Models.transform_num(elem)+" ")
-                myfile.write("\n")
-            
-            iter+=1
-            if(iter >N): break;
-            elif(Models.log): print("\r{}".format(iter),end=" ")
-            myfile.close()
+        
+        write_images(gen_imgs[:N], output_file)
 
     def generate_from_npy(input, output_file, parity=None):
         N=Models.N
@@ -82,7 +91,7 @@ class Models:
         noTransform=(np.max(data[0])>2)
         iter=0
         iter2=0
-        for img in data:
+        for img in data[:2*N]:
             # ===== Train and test =====
             if(parity == None or iter%2==parity):
                 #print(iter)
@@ -92,7 +101,7 @@ class Models:
                         if(noTransform):
                             myfile.write(str(elem)+" ")
                         else:
-                            myfile.write(Models.transform_num(elem,True)+" ")
+                            myfile.write(transform_num(elem,True)+" ")
                     myfile.write("\n")
                 myfile.close()
                 iter2+=1
@@ -114,7 +123,28 @@ class Models:
         print(" ".join(args+[model_filename+"/compare.txt"]))
         os.system(" ".join(args+[model_filename+"/compare.txt"]))
 
-    def toy_black_white(model_filename = "models/dataset/dataset/batch_name", dataset= "dsprite", generate=False, size = [64,64,1]):
+    def generate_feature(picture_folder, shape, feature_net ):
+        """ Generates features from the given pictures """
+        datas = read_model_data(picture_folder)
+        datas = np.resize(datas, (-1, shape[0],shape[1],shape[2]))
+
+        vgg = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
+        all_layers_model = Model(inputs = vgg.input, outputs = [layer.output for layer in vgg.layers][1:])
+        layers = all_layers_model.predict(datas[0:100])
+        layers = [elem[0][0] for elem in layers]
+        features = [[img] for img in layers[-1]]
+        
+        print("Shape of features: {}".format(np.shape(features)))
+
+        new_folder = os.path.join( picture_folder, "../", feature_net)
+        if(not os.path.isdir(new_folder)):
+            os.makedirs(new_folder)
+        write_images(features, new_folder)
+
+        return np.shape(features)[1:]
+
+    def toy_black_white(model_filename = "models/dataset/batch_name", dataset= "dsprite",
+                        generate=False, size = [64,64,1], feature = False):
         if(generate):
             if(os.path.exists(model_filename+".npy")):
                 Models.generate_from_npy(model_filename+".npy", model_filename+"/data")
@@ -122,21 +152,29 @@ class Models:
                 gen_model=Models.get_model(model_filename)
                 Models.generate_samples(gen_model, model_filename+"/data",Models.N)
 
-        print(size)
-        if(len(size)>2):
+        network = "data"
+        if(feature):
+            network = "vgg"
+            Models.generate_feature(model_filename+"/data", size, network)
+            size = Models.generate_feature("models/{}/train/data".format(dataset), size, network)
+        elif(len(size)>2):
             size[1]*=size[2]
             
         size = str(size[0])+","+str(size[1])
+        print("New size is: {}".format(size))
+
         args=["bin/main",
               "-size",size,
-              "-folder1","models/{}/train/data".format(dataset),
-              "-folder2",model_filename+"/data","-N {}".format(Models.N),"-range {}".format(Models.range),
+              "-folder1","models/{}/train/{}".format(dataset, network),
+              "-folder2",model_filename+"/{}".format(network),
+              "-N {}".format(Models.N),
+              "-range {}".format(Models.range),
               "-out"]
         print(" ".join(args+[model_filename+"/compare.txt"]))
-        #os.system(" ".join(args+[model_filename+"/compare.txt"]))
+        os.system(" ".join(args+[model_filename+"/compare.txt"]))
         #Models.measure_process(" ".join(args+[model_filename+"/deficit.txt","-deficit"]),"Deficit",Models.N,Models.range)
         #Models.measure_process(" ".join(args+[model_filename+"/defFlow.txt","-defFlow"]),"Deflow",Models.N,Models.range)
-        fid_score("models/{}/train".format(dataset), model_filename) 
+        #fid_score("models/{}/train".format(dataset), model_filename) 
         
 def parse():
     parser = argparse.ArgumentParser(description='Plot for specific model')
@@ -148,13 +186,14 @@ def parse():
         help='Range of batch steps (r, N)', default = 100)
     parser.add_argument('-folder', metavar='FILE', dest="folder", type = str,
         help='The follder, where you want the output', default = ".")
-    parser.add_argument('-choose', metavar='STR', dest="mode", type=str,
+    parser.add_argument('-mode', metavar='STR', dest="mode", type=str,
                         help="Mode foor different type of data")
     parser.add_argument('-batchs', metavar='TUPLE', dest="batchs", type=str, nargs="+",
                 help="Batchs example: generator_8000")
     parser.add_argument('-size', metavar='TUPLE', dest="size", type=int, nargs="+",
                                         help="Size example: 64 64 1")
     parser.add_argument('--plot', metavar='BOOLEAN', dest="plot", const = True, default = False, nargs='?')
+    parser.add_argument('--featureDist', metavar='BOOLEAN', dest="featureDist", const = True, default = False, nargs='?')
     return parser
 
 import argparse
@@ -164,7 +203,13 @@ if(__name__=="__main__"):
     Models.range=args.r
     Models.myTimer=open("mytimer.txt","w")
 
-    if(args.mode == "toy"):
+    if(args.mode == "feature"):
+        print("Hello {}".format(args.featureDist))
+        act_model = "models/{}/{}/{}".format(args.dataset, "wgan", "generator_1000")
+        Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
+        #size alallit
+
+    elif(args.mode == "toy"):
         train_folder = "models/{}/train".format(args.dataset)
         test_folder = "models/{}/test".format(args.dataset)
         new_test_folder = "models/{}/new_test".format(args.dataset)
@@ -186,7 +231,8 @@ if(__name__=="__main__"):
                 act_model = "models/{}/{}/{}".format(args.dataset, model, batch)
                 all_models.append(act_model)
         for act_model in all_models:
-            if(not args.plot): Models.toy_black_white(act_model, args.dataset, ("test" not in act_model), args.size)
+            if(not args.plot):
+                Models.toy_black_white(act_model, args.dataset, ("test" not in act_model), args.size)
             # ===== Plot Matching =====
             for r in range(Models.range, Models.N+Models.range, Models.range):
                 print('\r',r, end='')

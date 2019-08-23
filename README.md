@@ -16,13 +16,13 @@ g++ -O3 -std=c++17 -o bin/main src/main.cpp -lstdc++fs
 Run a specific modell with:
 
 ```
-python scripts/process_model.py -N 1000 -r 500 -choose toy -batchs celeba_49999 -dataset celeba -size 64 64 3
+python scripts/process_model.py -N 1000 -r 500 -mode toy -batchs celeba_49999 -dataset celeba -size 64 64 3
 ```
 
 Parameters:
 * **-N**: Number of samples in the metrics
 * **-r**: Range, runs until **N**
-* **-choose**: Mode type
+* **-mode**: Mode type
 * **-batch**: Model name
 * **-dataset**: Chosen dataset
 * **-size**: Size of images, divided by spaces (For example: 64 64 3)

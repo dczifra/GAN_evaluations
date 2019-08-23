@@ -96,10 +96,17 @@ def plotImages2(data, n_x, n_y, name, text=None):
         img.text(10, 10, text)
     img.save(fileName)
     
-def read_model_data(model_path,N,mod2="image"):
+def read_model_data(model_path,N = -1 ,mod2="image"):
     model_data=[]
-    for i in range(N):
-        myfile=open(model_path+"/{}_{}.txt".format(mod2,i))
+    i=-1
+    while(i<N or N == -1):
+        i+=1
+        # Read the file:
+        try:
+            myfile=open(model_path+"/{}_{}.txt".format(mod2,i))
+        except IOError:
+            break;
+
         mtx=[]
         for line in myfile:
             mtx.append(line[:-2].split(' '))
