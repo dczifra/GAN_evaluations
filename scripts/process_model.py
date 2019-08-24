@@ -2,7 +2,9 @@ import numpy as np
 import os
 import sys
 import time
+import copy
 import keras
+import random
 
 from keras.models import Model
 from keras.layers import Input, Dense
@@ -154,8 +156,25 @@ class Models:
 
         return np.shape(features)[1:]
 
+    def generate_collapse_model(test_model):
+        datas = read_model_data(test_model+"/data", Models.N)
+
+        for i in range(Models.range, Models.N+1, Models.range):
+            new_folder = os.path.join( test_model, "../", "test_collapsed/gen_{}/data".format(i))
+            if(not os.path.isdir(new_folder)):
+                os.makedirs(new_folder)
+
+            collapsed_data = []
+            for j in range(Models.N):
+                randnum = random.randint(0,i-1)
+                collapsed_data.append(datas[randnum])
+
+            write_images(collapsed_data, new_folder, transform=False)
+        
     def toy_black_white(model_filename = "models/dataset/batch_name", dataset= "dsprite",
-                        generate=False, size = [64,64,1], feature = None):
+                        generate=False, mysize = [64,64,1], feature = None):
+        size = copy.copy(mysize)
+        
         if(generate):
             if(os.path.exists(model_filename+".npy")):
                 Models.generate_from_npy(model_filename+".npy", model_filename+"/data")
@@ -163,9 +182,10 @@ class Models:
                 gen_model=Models.get_model(model_filename)
                 Models.generate_samples(gen_model, model_filename+"/data",Models.N)
 
+        print("Orig size is : {}".format(size))
         network = "data"
         if(feature):
-            network = "mobilenet"
+            network = Models.net
             Models.generate_feature(model_filename+"/data", size, network)
             size = Models.generate_feature("models/{}/train/data".format(dataset), size, network)
         elif(len(size)>2):
@@ -214,21 +234,51 @@ if(__name__=="__main__"):
     Models.range=args.r
     Models.myTimer=open("mytimer.txt","w")
 
-    if(args.mode == "feature"):
+    if(args.mode == "collapse"):
+        test_model = "models/{}/test".format(args.dataset)
+        Models.generate_collapse_model(test_model)
+        # We run the model just on Models.N, Models.range means the collapse range here!
+        myrange = Models.range
+        Models.range = Models.N
+        Models.net = "mobilenet"
+        if(not args.featureDist):
+            Models.net = "l2"
+
+        outdir = os.path.join(test_model, "../", "test_collapsed")
+        logfile = open(os.path.join(test_model, "../", "test_collapsed/result_{}.txt".format(Models.net)), "w")
+        logfile.write("{} {} {}\n".format(myrange, Models.N, myrange))
+        for i in range(myrange, Models.N+1, myrange):
+            act_model = os.path.join( test_model, "../", "test_collapsed/gen_{}".format(i))
+            Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
+
+            act_result_file = open(os.path.join( test_model, "../", "test_collapsed/gen_{}/compare.txt".format(i)))
+            act_result_file.readline()
+            data = act_result_file.readline()[:-1]
+
+            logfile.write(data+" ")
+        logfile.close()
+        plots.different_model_compare(files=[os.path.join(test_model, "../", "test_collapsed/result_{}.txt".format(Models.net))],
+                                      title="Mode Collapse experiment on {}".format(Models.net,args.dataset),
+                                      labels=["score"], outfile=outdir+"/{}_collapse_exp.png".format(Models.net))
+                        
+    elif(args.mode == "feature"):
         print("===== Feature Mode: {}  =====".format(args.featureDist))
         #act_model = "models/{}/{}/{}".format(args.dataset, "wgan-gp", args.batchs[0])
+        Models.generate_from_npy("models/celeba/dani/generated"+".npy", "models/celeba/dani/generated/"+"/data")
         all_models = [ "models/{}/test".format(args.dataset),
                        "models/{}/{}/{}".format(args.dataset, "wgan", args.batchs[0]),
-                       "models/{}/{}/{}".format(args.dataset, "wgan-gp", args.batchs[0]) ]
-        labels = ["test", "wgan", "wgan-gp"]
+                       "models/{}/{}/{}".format(args.dataset, "wgan-gp", args.batchs[0]),
+                       "models/{}/{}/{}".format(args.dataset, "dani", "generated")]
+        labels = ["test", "wgan", "wgan-gp", "dani"]
         outdir = "models/{}".format(args.dataset)
-        
+
+        Models.net = "mobilenet"
         for act_model in all_models:
             Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
 
         plots.different_model_compare(files=[model+"/compare.txt" for model in all_models],
-                                      title="MobileNet Matching score on: {}".format(args.dataset),
-                                      labels=labels, outfile=outdir+"/mobileNet_compare.png")
+                                      title="{} Matching score on: {}".format(Models.net,args.dataset),
+                                      labels=labels, outfile=outdir+"/{}_compare.png".format(Models.net))
 
     elif(args.mode == "toy"):
         train_folder = "models/{}/train".format(args.dataset)
