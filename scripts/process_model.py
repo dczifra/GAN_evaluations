@@ -131,10 +131,15 @@ class Models:
         datas = read_model_data(picture_folder, Models.N)
         datas = np.reshape(datas, (-1, shape[0],shape[1],shape[2]))
 
-        pretrained = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
-        #pretrained = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
-        #pretrained = keras.applications.mobilenet.MobileNet(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), input_shape=None, pooling=None, classes=1000)
-
+        if(feature_net == "vgg16"):
+            pretrained = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), classes=1000)
+        elif(feature_net == "vgg19"):
+            pretrained = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), classes=1000)
+        elif(feature_net == "mobilenet"):
+            pretrained = keras.applications.mobilenet.MobileNet(include_top=False, weights='imagenet', input_tensor = Input(shape=shape), classes=1000)
+        else:
+            print("Pretrained network {} not found!".format(feature_net))
+            
         all_layers_model = Model(inputs = pretrained.input, outputs = [layer.output for layer in pretrained.layers][1:])
         myLayer = all_layers_model.predict(datas)[-1]
         features = [[elem[0][0]] for elem in myLayer]
@@ -150,7 +155,7 @@ class Models:
         return np.shape(features)[1:]
 
     def toy_black_white(model_filename = "models/dataset/batch_name", dataset= "dsprite",
-                        generate=False, size = [64,64,1], feature = False):
+                        generate=False, size = [64,64,1], feature = None):
         if(generate):
             if(os.path.exists(model_filename+".npy")):
                 Models.generate_from_npy(model_filename+".npy", model_filename+"/data")
@@ -160,7 +165,7 @@ class Models:
 
         network = "data"
         if(feature):
-            network = "vgg"
+            network = "mobilenet"
             Models.generate_feature(model_filename+"/data", size, network)
             size = Models.generate_feature("models/{}/train/data".format(dataset), size, network)
         elif(len(size)>2):
@@ -210,10 +215,20 @@ if(__name__=="__main__"):
     Models.myTimer=open("mytimer.txt","w")
 
     if(args.mode == "feature"):
-        print("Hello {}".format(args.featureDist))
-        act_model = "models/{}/{}/{}".format(args.dataset, "wgan", args.batchs[0])
-        Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
-        #size alallit
+        print("===== Feature Mode: {}  =====".format(args.featureDist))
+        #act_model = "models/{}/{}/{}".format(args.dataset, "wgan-gp", args.batchs[0])
+        all_models = [ "models/{}/test".format(args.dataset),
+                       "models/{}/{}/{}".format(args.dataset, "wgan", args.batchs[0]),
+                       "models/{}/{}/{}".format(args.dataset, "wgan-gp", args.batchs[0]) ]
+        labels = ["test", "wgan", "wgan-gp"]
+        outdir = "models/{}".format(args.dataset)
+        
+        for act_model in all_models:
+            Models.toy_black_white(act_model, args.dataset, False, args.size, args.featureDist)
+
+        plots.different_model_compare(files=[model+"/compare.txt" for model in all_models],
+                                      title="MobileNet Matching score on: {}".format(args.dataset),
+                                      labels=labels, outfile=outdir+"/mobileNet_compare.png")
 
     elif(args.mode == "toy"):
         train_folder = "models/{}/train".format(args.dataset)
