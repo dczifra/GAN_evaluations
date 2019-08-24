@@ -30,7 +30,7 @@ Parameters:
 * The plots are generated automatically, but you can invoke it manually:
 
 ## Plots:
-    python scripts/plot.py -N 1000 -r 500 -choose toy -batchs celeba_49999 -dataset celeba -size 64 64 3
+    python scripts/plots.py -N 1000 -r 500 -choose toy -batchs celeba_49999 -dataset celeba -size 64 64 3
 
 ## Synchronization:
  There is a synchronization script, if you don't have *-X* in terminal.

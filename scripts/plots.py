@@ -67,35 +67,6 @@ def gen_data_progress_of_model(models, file, batch):
     print(outfiles)
     return outfiles
 
-from PIL import Image
-def plotImages2(data, n_x, n_y, name, text=None):
-    data = np.array(data)
-    (height, width, channel) = data.shape[1:]
-    height_inc = height + 1
-    width_inc = width + 1
-    n = len(data)
-    if n > n_x*n_y: n = n_x * n_y
-
-    if channel == 1:
-        mode = "L"
-        data = data[:,:,:,0]
-        image_data = 50 * np.ones((height_inc * n_y + 1, width_inc * n_x - 1), dtype='uint8')
-    else:
-        mode = "RGB"
-        image_data = 50 * np.ones((height_inc * n_y + 1, width_inc * n_x - 1, channel), dtype='uint8')
-    for idx in range(n):
-        x = idx % n_x
-        y = idx // n_x
-        sample = data[idx]
-        image_data[height_inc*y:height_inc*y+height, width_inc*x:width_inc*x+width] = 255*sample.clip(0, 0.99999)
-    img = Image.fromarray(image_data,mode=mode)
-
-    fileName = name + ".png"
-    print("Creating file " + fileName)
-    if text is not None:
-        img.text(10, 10, text)
-    img.save(fileName)
-
 def read_model_data(model_path,N ,mod2="image"):
     model_data=[]
     i=-1
@@ -209,15 +180,6 @@ def get_nth_matching(model_path1, model_path2, matching_file):
     scores=scores[::N//100]
     pict1=[model_data1[match[int(i)][0]] for _,i in scores]
     pict2=[model_data2[match[int(i)][1]] for _,i in scores]
-    #size=np.shape(model_data1)
-    #if(size[-1]!=size[-2]):
-    #    #print(size)
-    #    model_data1=np.resize(model_data1,(size[0],size[1],size[2]//3,3)).astype(int)
-    #    model_data2=np.resize(model_data2,(size[0],size[1],size[2]//3,3)).astype(int)
-    #else:
-    #    model_data1=np.resize(model_data1,(size[0],size[1],size[2],1)).astype(int)
-    #    model_data2=np.resize(model_data2,(size[0],size[1],size[2],1)).astype(int)
-    #return ([model_data1[match[i*(N//100)][0]] for i in range(0,100)], [model_data2[match[i*(N//100)][1]] for i in range(0,100)])
     return (pict1, pict2)
 
 def hist(matching_file, outdir):
@@ -304,58 +266,6 @@ def plot_matching_pairs(model_path1, model_path2, matching_file, N, outdir):
     N=int(len(scores)*0.75)
     print("", np.mean(np.array(scores[0:N])))
 
-def wgan_wgan_gp_type(N,type,second=False):
-    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
-    labels=["test","wgan","wgan-gp"]
-    different_model_compare( files=["data/mnist/test/{}.txt".format(type),
-            "models/wgan/generator_{}/{}.txt".format(N,type),
-            "models/wgan-gp/generator_{}/{}.txt".format(N,type)],
-            title=title,
-            labels=labels,second=second)
-
-def model_type(N,model,type,second=False):
-    title="{} {}".format(model,type)
-    labels=["test",model+" 1000",model+" 5000", model+" 10000"]
-    different_model_compare( files=["data/mnist/test/{}.txt".format(type),
-            "models/{}/generator_{}/{}.txt".format(model,1000,type),
-            "models/{}/generator_{}/{}.txt".format(model,5000,type),
-            "models/{}/generator_{}/{}.txt".format(model,10000,type)],
-            title=title,
-            labels=labels,second=second)
-
-def new_model_type(N,model,type,second=False):
-    title="WGAN, WGAN-GP Párosítás-Pontszám {} EPOCH".format(N)
-    labels=["test",model+" 1000",model+" 5000", model+" 10000"]
-    different_model_compare( files=["data/mnist/test/{}.txt".format(type),
-            "models/{}/{}.txt".format(model,type)],
-            title=title,
-            labels=labels,second=second)
-
-def FID_for_MNIST():
-    title="FID for MINST"
-    labels=["test","wgan","wgan-gp"]
-    different_model_compare( files=[
-            "eval/mnist_train_test.fid",
-            "eval/mnist_train_wgan.fid",
-            "eval/mnist_train_wgan-gp.fid"],
-            title=title,
-            labels=labels)
-def celeba_example():
-    # ===== Origin =====
-    file="/home/doma/model_celeba10000.npy"
-    data=np.load(file)
-    plt.imshow(data[0])
-    plt.show()
-
-    # ===== Reconstruct =====
-    model_data1=read_model_data("models/celeba/train/data")
-    model_data2=[]
-    for img in model_data1:
-        model_data2.append(np.resize(img,(64,64,3)))
-    model_data2=np.array(model_data2).astype(int)
-    plt.imshow(model_data2[0].astype(int))
-    plt.show()
-
 import argparse
 def parse():
     parser = argparse.ArgumentParser(description='Plot for specific model')
@@ -367,7 +277,7 @@ def parse():
                     help='Range of batch steps (r, N)', default = 100)
     parser.add_argument('-folder', metavar='FILE', dest="folder", type = str,
                     help='The folder, where you want the output', default = ".")
-    parser.add_argument('-choose', metavar='STR', dest="mode", type=str,
+    parser.add_argument('-mode', metavar='STR', dest="mode", type=str,
                     help="Mode foor different type of data")
     parser.add_argument('-batchs', metavar='TUPLE', dest="batchs", type=str,nargs="+",
                     help="Batchs example: generator_8000")
@@ -421,5 +331,5 @@ if(__name__=="__main__"):
         model2="models/trash/celeba/dani/"#"models/wgan/generator_1000"
         plot_matching_pairs(model1+"data",model2+"/data",
                             model2+"/mnist_result_{}.txt".format(1000), 1000 , 'models')
-        
+
     exit()
